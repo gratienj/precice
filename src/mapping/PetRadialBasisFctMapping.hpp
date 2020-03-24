@@ -11,6 +11,7 @@
 #include "impl/BasisFunctions.hpp"
 #include "math/math.hpp"
 #include "mesh/RTree.hpp"
+#include "mesh/Vertex.hpp"
 #include "precice/impl/versions.hpp"
 #include "utils/Petsc.hpp"
 namespace petsc = precice::utils::petsc;
@@ -403,20 +404,27 @@ void PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::computeMapping()
       ++preallocRow;
     } else {
       for (const mesh::Vertex &vj : inMesh->vertices()) {
-        int const col = vj.getGlobalIndex() + polyparams;
-        if (row > col)
-          continue; // matrix is symmetric
-        distance = inVertex.getCoords() - vj.getCoords();
-        for (int d = 0; d < dimensions; d++) {
-          if (_deadAxis[d]) {
-            distance[d] = 0;
+        if ( inVertex.getPatchID() == vj.getPatchID() ){
+          PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+          PRECICE_DEBUG("Matrix C: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
+            int const col = vj.getGlobalIndex() + polyparams;
+            if (row > col)
+              continue; // matrix is symmetric
+            distance = inVertex.getCoords() - vj.getCoords();
+            for (int d = 0; d < dimensions; d++) {
+              if (_deadAxis[d]) {
+                distance[d] = 0;
+              }
+            }
+            double const norm = distance.norm();
+            if (_basisFunction.getSupportRadius() > norm) {
+              rowVals[colNum]  = _basisFunction.evaluate(norm);
+             colIdx[colNum++] = col; // column of entry is the globalIndex
           }
-        }
-        double const norm = distance.norm();
-        if (_basisFunction.getSupportRadius() > norm) {
-          rowVals[colNum]  = _basisFunction.evaluate(norm);
-          colIdx[colNum++] = col; // column of entry is the globalIndex
-        }
+      }else{
+        PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+        PRECICE_DEBUG("Matrix C: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
+      }
       }
     }
     ierr = AOApplicationToPetsc(_AOmapping, colNum, colIdx.data());
@@ -494,17 +502,24 @@ void PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::computeMapping()
       }
     } else {
       for (const mesh::Vertex &inVertex : inMesh->vertices()) {
-        distance = oVertex.getCoords() - inVertex.getCoords();
-        for (int d = 0; d < dimensions; d++) {
-          if (_deadAxis[d])
-            distance[d] = 0;
+        if ( inVertex.getPatchID() == oVertex.getPatchID() ){
+          PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+          PRECICE_DEBUG("Matrix A: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
+          distance = oVertex.getCoords() - inVertex.getCoords();
+          for (int d = 0; d < dimensions; d++) {
+            if (_deadAxis[d])
+              distance[d] = 0;
+          }
+          double const norm = distance.norm();
+          if (_basisFunction.getSupportRadius() > norm) {
+            rowVals[colNum]  = _basisFunction.evaluate(norm);
+            colIdx[colNum++] = inVertex.getGlobalIndex() + polyparams;
         }
-        double const norm = distance.norm();
-        if (_basisFunction.getSupportRadius() > norm) {
-          rowVals[colNum]  = _basisFunction.evaluate(norm);
-          colIdx[colNum++] = inVertex.getGlobalIndex() + polyparams;
+        }else{
+          PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+          PRECICE_DEBUG("Matrix A: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
         }
-      }
+      } 
     }
     ierr = AOApplicationToPetsc(_AOmapping, colNum, colIdx.data());
     CHKERRV(ierr);
@@ -1031,12 +1046,18 @@ void PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::computePreallocationMatr
           distance[d] = 0;
         }
       }
-
-      if (_basisFunction.getSupportRadius() > distance.norm() or col == global_row) {
-        if (mappedCol >= colOwnerRangeCBegin and mappedCol < colOwnerRangeCEnd)
-          d_nnz[local_row]++;
-        else
-          o_nnz[local_row]++;
+      if ( inVertex.getPatchID() == vj.getPatchID() ){
+        PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+        PRECICE_DEBUG("Matrix C: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
+        if (_basisFunction.getSupportRadius() > distance.norm() or col == global_row) {
+          if (mappedCol >= colOwnerRangeCBegin and mappedCol < colOwnerRangeCEnd)
+            d_nnz[local_row]++;
+          else
+            o_nnz[local_row]++;
+      }
+      }else{
+        PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+        PRECICE_DEBUG("Matrix C: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
       }
     }
     local_row++;
@@ -1109,14 +1130,21 @@ void PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::computePreallocationMatr
         if (_deadAxis[d])
           distance[d] = 0;
       }
+      if ( inVertex.getPatchID() == oVertex.getPatchID() ){
+        PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+        PRECICE_DEBUG("Matrix A: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
 
-      if (_basisFunction.getSupportRadius() > distance.norm()) {
-        col = inVertex.getGlobalIndex() + polyparams;
-        AOApplicationToPetsc(_AOmapping, 1, &col);
-        if (col >= colOwnerRangeABegin and col < colOwnerRangeAEnd)
-          d_nnz[localRow]++;
-        else
-          o_nnz[localRow]++;
+        if (_basisFunction.getSupportRadius() > distance.norm()) {
+          col = inVertex.getGlobalIndex() + polyparams;
+          AOApplicationToPetsc(_AOmapping, 1, &col);
+          if (col >= colOwnerRangeABegin and col < colOwnerRangeAEnd)
+            d_nnz[localRow]++;
+          else
+            o_nnz[localRow]++;
+        }
+        }else{
+          PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+          PRECICE_DEBUG("Matrix A: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
       }
     }
   }
@@ -1186,13 +1214,21 @@ PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::savedPreallocationMatrixC(mes
         if (_deadAxis[d])
           distance[d] = 0;
 
-      double const norm = distance.norm();
-      if (_basisFunction.getSupportRadius() > norm or col == global_row) {
-        vertexData[local_row - localPolyparams].emplace_back(vj.getGlobalIndex() + polyparams, norm);
-        if (mappedCol >= colOwnerRangeCBegin and mappedCol < colOwnerRangeCEnd)
-          d_nnz[local_row]++;
-        else
-          o_nnz[local_row]++;
+      if ( inVertex.getPatchID() == vj.getPatchID() ){
+        PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+        PRECICE_DEBUG("Matrix C: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
+        double const norm = distance.norm();
+        if (_basisFunction.getSupportRadius() > norm or col == global_row) {
+          vertexData[local_row - localPolyparams].emplace_back(vj.getGlobalIndex() + polyparams, norm);
+          if (mappedCol >= colOwnerRangeCBegin and mappedCol < colOwnerRangeCEnd)
+            d_nnz[local_row]++;
+          else
+            o_nnz[local_row]++;
+        }
+        }else{
+          PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+          PRECICE_DEBUG("Matrix C: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
+        
       }
     }
     local_row++;
@@ -1267,19 +1303,28 @@ PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::savedPreallocationMatrixA(mes
         if (_deadAxis[d])
           distance[d] = 0;
 
-      double const norm = distance.norm();
-      if (_basisFunction.getSupportRadius() > norm) {
-        col = inVertex.getGlobalIndex() + polyparams;
-        vertexData[localRow].emplace_back(col, norm);
+      if ( inVertex.getPatchID() == oVertex.getPatchID() ){
+        PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+        PRECICE_DEBUG("Matrix A: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
 
-        AOApplicationToPetsc(_AOmapping, 1, &col);
-        if (col >= colOwnerRangeABegin and col < colOwnerRangeAEnd)
-          d_nnz[localRow]++;
-        else
-          o_nnz[localRow]++;
+        double const norm = distance.norm();
+        if (_basisFunction.getSupportRadius() > norm) {
+          col = inVertex.getGlobalIndex() + polyparams;
+          vertexData[localRow].emplace_back(col, norm);
+
+          AOApplicationToPetsc(_AOmapping, 1, &col);
+          if (col >= colOwnerRangeABegin and col < colOwnerRangeAEnd)
+            d_nnz[localRow]++;
+          else
+           o_nnz[localRow]++;
+        }
+      }else{
+        PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+        PRECICE_DEBUG("Matrix A: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
       }
     }
   }
+  
   if (utils::Parallel::getCommunicatorSize() == 1) {
     // std::cout << "Preallocation A Seq diagonal = " << std::accumulate(d_nnz.begin(), d_nnz.end(), 0) << '\n';
     MatSeqAIJSetPreallocation(_matrixA, 0, d_nnz.data());
@@ -1358,14 +1403,24 @@ PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::bgPreallocationMatrixC(mesh::
       for (int d = 0; d < dimensions; d++)
         if (_deadAxis[d])
           distance[d] = 0;
+      
+      int inVertexPatchID = inVertex.getPatchID();
+      int vjPatchID = vj.getPatchID();
 
       double const norm = distance.norm();
+      if ( inVertexPatchID == vjPatchID ){
+        PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+        PRECICE_DEBUG("Matrix C: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
       if (supportRadius > norm or col == global_row) {
         vertexData[local_row - localPolyparams].emplace_back(vj.getGlobalIndex() + polyparams, norm);
         if (mappedCol >= colOwnerRangeCBegin and mappedCol < colOwnerRangeCEnd)
           d_nnz[local_row]++;
         else
           o_nnz[local_row]++;
+      }
+      } else{
+        PRECICE_DEBUG("Matrix C: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << vj.getID() );
+        PRECICE_DEBUG("Matrix C: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << vj.getPatchID() );
       }
       col++;
     }
@@ -1451,14 +1506,21 @@ PetRadialBasisFctMapping<RADIAL_BASIS_FUNCTION_T>::bgPreallocationMatrixA(mesh::
 
       double const norm = distance.norm();
       if (supportRadius > norm) {
-        col = inVertex.getGlobalIndex() + polyparams;
-        vertexData[localRow].emplace_back(col, norm);
+        if ( inVertex.getPatchID() == oVertex.getPatchID() ){
+          PRECICE_DEBUG("Matrix A: D numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+          PRECICE_DEBUG("Matrix A: Patch ID matches: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
+          col = inVertex.getGlobalIndex() + polyparams;
+          vertexData[localRow].emplace_back(col, norm);
 
-        AOApplicationToPetsc(_AOmapping, 1, &col);
-        if (col >= colOwnerRangeABegin and col < colOwnerRangeAEnd)
-          d_nnz[localRow]++;
-        else
-          o_nnz[localRow]++;
+          AOApplicationToPetsc(_AOmapping, 1, &col);
+          if (col >= colOwnerRangeABegin and col < colOwnerRangeAEnd)
+            d_nnz[localRow]++;
+          else
+            o_nnz[localRow]++;
+        }else{
+          PRECICE_DEBUG("Matrix A: ID numbers of vertices: inVertexID = " << inVertex.getID() << " and vjID = " << oVertex.getID() );
+          PRECICE_DEBUG("Matrix A: Skip due to patch ID difference: inVertexPatchID = " << inVertex.getPatchID() << " and vjPatchID = " << oVertex.getPatchID() );
+        }
       }
     }
   }

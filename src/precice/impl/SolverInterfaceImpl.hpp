@@ -237,13 +237,23 @@ public:
   /**
    * @brief Sets several spatial positions for a mesh.
    *
-   * @param[out] ids IDs for data from given positions.
+   * @param[out] ids IDs fo r data from given positions.
    */
   void setMeshVertices(
       int           meshID,
       int           size,
       const double *positions,
       int *         ids);
+
+
+  void setMeshVertexPatch(
+      int           meshID, 
+      int           VertexID, 
+      int           patchID);
+
+  int getMeshVertexPatch(
+      int           meshID,
+      int           vertexID);
 
   /**
    * @brief Gets spatial positions of vertices for given IDs.
