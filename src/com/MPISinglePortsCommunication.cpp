@@ -82,11 +82,16 @@ void MPISinglePortsCommunication::acceptConnection(std::string const &acceptorNa
     }
 
     PRECICE_ASSERT(requesterCommunicatorSize > 0,
-                   "Requester communicator size is {} which is invalid.", requesterCommunicatorSize);
+                   "Requester communicator size is {} which is invalid.",
+                   requesterCommunicatorSize);
     PRECICE_ASSERT(requesterCommunicatorSize == peerCount,
-                   "Current requester size from rank {} is {} but should be {}", requesterRank, requesterCommunicatorSize, peerCount);
+                   "Current requester size from rank {} is {} but should be {}",
+                   requesterRank,
+                   requesterCommunicatorSize,
+                   peerCount);
     PRECICE_ASSERT(_direct.count(requesterRank) == 0,
-                   "Rank {} has already been connected. Duplicate requests are not allowed.", requesterRank);
+                   "Rank {} has already been connected. Duplicate requests are not allowed.",
+                   requesterRank);
 
     _direct.emplace(requesterRank, communicator);
 
@@ -120,7 +125,8 @@ void MPISinglePortsCommunication::acceptConnectionAsServer(std::string const &ac
     conInfo.write(_portName);
     PRECICE_DEBUG("Accept connection at {}", _portName);
 
-    MPI_Comm_accept(const_cast<char *>(_portName.c_str()), MPI_INFO_NULL, 0, utils::Parallel::current()->comm, &_global);
+    MPI_Comm_accept(
+        const_cast<char *>(_portName.c_str()), MPI_INFO_NULL, 0, utils::Parallel::current()->comm, &_global);
     PRECICE_DEBUG("Accepted connection at {}", _portName);
 
   } else { // Secondary ranks call simply call accept
@@ -181,8 +187,7 @@ void MPISinglePortsCommunication::requestConnectionAsClient(std::string const & 
   _portName = conInfo.read();
   PRECICE_DEBUG("Request connection to {}", _portName);
 
-  MPI_Comm_connect(const_cast<char *>(_portName.c_str()), MPI_INFO_NULL, 0,
-                   utils::Parallel::current()->comm, &_global);
+  MPI_Comm_connect(const_cast<char *>(_portName.c_str()), MPI_INFO_NULL, 0, utils::Parallel::current()->comm, &_global);
   PRECICE_DEBUG("Requested connection to {}", _portName);
 
   _isConnected = true;

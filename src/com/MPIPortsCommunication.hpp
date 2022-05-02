@@ -53,11 +53,9 @@ public:
 
   virtual void closeConnection() override;
 
-  virtual void prepareEstablishment(std::string const &acceptorName,
-                                    std::string const &requesterName) override;
+  virtual void prepareEstablishment(std::string const &acceptorName, std::string const &requesterName) override;
 
-  virtual void cleanupEstablishment(std::string const &acceptorName,
-                                    std::string const &requesterName) override;
+  virtual void cleanupEstablishment(std::string const &acceptorName, std::string const &requesterName) override;
 
 private:
   virtual MPI_Comm &communicator(Rank rank) override;

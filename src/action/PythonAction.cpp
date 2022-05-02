@@ -94,20 +94,18 @@ std::vector<std::string> python_func_args(PyObject *const func)
 }
 } // namespace
 
-PythonAction::PythonAction(
-    Timing               timing,
-    std::string          modulePath,
-    std::string          moduleName,
-    const mesh::PtrMesh &mesh,
-    int                  targetDataID,
-    int                  sourceDataID)
-    : Action(timing, mesh),
-      _modulePath(std::move(modulePath)),
-      _moduleName(std::move(moduleName))
+PythonAction::PythonAction(Timing               timing,
+                           std::string          modulePath,
+                           std::string          moduleName,
+                           const mesh::PtrMesh &mesh,
+                           int                  targetDataID,
+                           int                  sourceDataID)
+    : Action(timing, mesh), _modulePath(std::move(modulePath)), _moduleName(std::move(moduleName))
 {
   PRECICE_CHECK(boost::filesystem::is_directory(_modulePath),
                 "The module path of the python action \"{}\" does not exist. The configured path is \"{}\".",
-                _moduleName, _modulePath);
+                _moduleName,
+                _modulePath);
   if (targetDataID != -1) {
     _targetData = getMesh()->data(targetDataID);
     _numberArguments++;
@@ -129,10 +127,7 @@ PythonAction::~PythonAction()
   }
 }
 
-void PythonAction::performAction(double time,
-                                 double timeStepSize,
-                                 double computedTimeWindowPart,
-                                 double timeWindowSize)
+void PythonAction::performAction(double time, double timeStepSize, double computedTimeWindowPart, double timeWindowSize)
 {
   PRECICE_TRACE(time, timeStepSize, computedTimeWindowPart, timeWindowSize);
 
@@ -148,18 +143,21 @@ void PythonAction::performAction(double time,
     if (_sourceData) {
       npy_intp sourceDim[]  = {_sourceData->values().size()};
       double * sourceValues = _sourceData->values().data();
-      //PRECICE_ASSERT(_sourceValues == NULL);
+      // PRECICE_ASSERT(_sourceValues == NULL);
       _sourceValues = PyArray_SimpleNewFromData(1, sourceDim, NPY_DOUBLE, sourceValues);
-      PRECICE_CHECK(_sourceValues != nullptr, "Creating python source values failed. Please check that the source data name is used by the mesh in action:python.");
+      PRECICE_CHECK(_sourceValues != nullptr,
+                    "Creating python source values failed. Please check that the source data "
+                    "name is used by the mesh in action:python.");
       PyTuple_SetItem(dataArgs, 2, _sourceValues);
     }
     if (_targetData) {
       npy_intp targetDim[]  = {_targetData->values().size()};
       double * targetValues = _targetData->values().data();
-      //PRECICE_ASSERT(_targetValues == NULL);
-      _targetValues =
-          PyArray_SimpleNewFromData(1, targetDim, NPY_DOUBLE, targetValues);
-      PRECICE_CHECK(_targetValues != nullptr, "Creating python target values failed. Please check that the target data name is used by the mesh in action:python.");
+      // PRECICE_ASSERT(_targetValues == NULL);
+      _targetValues = PyArray_SimpleNewFromData(1, targetDim, NPY_DOUBLE, targetValues);
+      PRECICE_CHECK(_targetValues != nullptr,
+                    "Creating python target values failed. Please check that the target data "
+                    "name is used by the mesh in action:python.");
       int argumentIndex = _sourceData ? 3 : 2;
       PyTuple_SetItem(dataArgs, argumentIndex, _targetValues);
     }
@@ -167,7 +165,8 @@ void PythonAction::performAction(double time,
     if (PyErr_Occurred()) {
       PRECICE_ERROR("Error occurred during call of function performAction() in python module \"{}\". "
                     "The error message is: {}",
-                    _moduleName, python_error_as_string());
+                    _moduleName,
+                    python_error_as_string());
     }
   }
 
@@ -187,15 +186,18 @@ void PythonAction::performAction(double time,
       coords                 = vertex.getCoords();
       PyObject *pythonID     = PyLong_FromLong(id);
       PyObject *pythonCoords = PyArray_SimpleNewFromData(1, vdim, NPY_DOUBLE, coords.data());
-      PRECICE_CHECK(pythonID != nullptr, "Creating python ID failed. Please check that the python-actions mesh name is correct.");
-      PRECICE_CHECK(pythonCoords != nullptr, "Creating python coords failed. Please check that the python-actions mesh name is correct.");
+      PRECICE_CHECK(pythonID != nullptr,
+                    "Creating python ID failed. Please check that the python-actions mesh name is correct.");
+      PRECICE_CHECK(pythonCoords != nullptr,
+                    "Creating python coords failed. Please check that the python-actions mesh name is correct.");
       PyTuple_SetItem(vertexArgs, 0, pythonID);
       PyTuple_SetItem(vertexArgs, 1, pythonCoords);
       PyObject_CallObject(_vertexCallback, vertexArgs);
       if (PyErr_Occurred()) {
         PRECICE_ERROR("Error occurred during call of function vertexCallback() in python module \"{}\". "
                       "The error message is: {}",
-                      _moduleName, python_error_as_string());
+                      _moduleName,
+                      python_error_as_string());
       }
     }
     Py_DECREF(vertexArgs);
@@ -207,7 +209,8 @@ void PythonAction::performAction(double time,
     if (PyErr_Occurred()) {
       PRECICE_ERROR("Error occurred during call of function postAction() in python module \"{}\". "
                     "The error message is: {}",
-                    _moduleName, python_error_as_string());
+                    _moduleName,
+                    python_error_as_string());
     }
     Py_DECREF(postActionArgs);
   }
@@ -260,7 +263,8 @@ void PythonAction::initialize()
     PRECICE_CHECK(_vertexCallbackArgs == 2 || _vertexCallbackArgs == 3,
                   "The provided vertexCallback() in python module \"{}\" has {} arguments, but needs to have 2 or 3. "
                   "Please use the following definition \"def vertexCallback(id, coords):\"",
-                  _moduleName, _vertexCallbackArgs);
+                  _moduleName,
+                  _vertexCallbackArgs);
   }
 
   // Construct function postAction

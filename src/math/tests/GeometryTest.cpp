@@ -37,8 +37,7 @@ BOOST_AUTO_TEST_CASE(Collinear)
   BOOST_CHECK(!geometry::collinear(a3D, b3D, notCollinearPoint3D));
 }
 
-BOOST_AUTO_TEST_CASE(TetraVolume,
-                     *boost::unit_test::tolerance(1e-3))
+BOOST_AUTO_TEST_CASE(TetraVolume, *boost::unit_test::tolerance(1e-3))
 {
   PRECICE_TEST(1_rank);
   Eigen::Vector3d a(1, 2, 3);
@@ -156,16 +155,14 @@ BOOST_AUTO_TEST_CASE(SegmentPlaneIntersection)
 
   // True intersection
   int result = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::INTERSECTION);
   BOOST_CHECK(equals(intersectionPoint, expected));
 
   // Touching second segment vertex
   secondSegmentPoint = Vector3d::Constant(0.0);
   result             = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::TOUCHING);
   BOOST_CHECK(equals(intersectionPoint, expected));
 
@@ -173,8 +170,7 @@ BOOST_AUTO_TEST_CASE(SegmentPlaneIntersection)
   firstSegmentPoint  = Vector3d::Constant(0.0);
   secondSegmentPoint = Vector3d::Constant(-1.0);
   result             = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::TOUCHING);
   BOOST_CHECK(equals(intersectionPoint, expected));
 
@@ -183,8 +179,7 @@ BOOST_AUTO_TEST_CASE(SegmentPlaneIntersection)
   intersectionPoint << 1.0, 2.0, 3.0; // should not be modified
   expected = intersectionPoint;
   result   = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::NO_INTERSECTION);
   BOOST_CHECK(equals(intersectionPoint, expected));
 
@@ -192,8 +187,7 @@ BOOST_AUTO_TEST_CASE(SegmentPlaneIntersection)
   firstSegmentPoint << 0.0, 0.0, 0.0;
   secondSegmentPoint << 1.0, 1.0, -2.0;
   result = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::CONTAINED);
   BOOST_CHECK(equals(intersectionPoint, expected));
 
@@ -201,8 +195,7 @@ BOOST_AUTO_TEST_CASE(SegmentPlaneIntersection)
   firstSegmentPoint << -2.0, -2.0, -2.0;
   secondSegmentPoint << -1.0, -1.0, -1.0;
   result = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::NO_INTERSECTION);
   BOOST_CHECK(equals(intersectionPoint, expected));
 
@@ -210,8 +203,7 @@ BOOST_AUTO_TEST_CASE(SegmentPlaneIntersection)
   firstSegmentPoint << -1.0, -1.0, -1.0;
   secondSegmentPoint << -2.0, -2.0, -2.0;
   result = geometry::segmentPlaneIntersection(
-      pointOnPlane, planeNormal, firstSegmentPoint,
-      secondSegmentPoint, intersectionPoint);
+      pointOnPlane, planeNormal, firstSegmentPoint, secondSegmentPoint, intersectionPoint);
   BOOST_TEST(result == geometry::NO_INTERSECTION);
   BOOST_CHECK(equals(intersectionPoint, expected));
 }
@@ -244,52 +236,41 @@ BOOST_AUTO_TEST_CASE(ContainedInTriangle)
   Eigen::Vector2d point(0.25, 0.25);
 
   // Contained point
-  int result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  int result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::CONTAINED);
 
   // Not contained points
   point << -1.0, -1.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
   point << 1.0, 1.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
   point << 2.0, 0.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
   point << 0.0, 2.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   // Touching points
   point << 0.0, 0.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::TOUCHING);
   point << 1.0, 0.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::TOUCHING);
   point << 0.0, 1.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::TOUCHING);
   point << 0.5, 0.0;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::TOUCHING);
   point << 0.0, 0.5;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::TOUCHING);
   point << 0.5, 0.5;
-  result = geometry::containedInTriangle(
-      triangleVertex0, triangleVertex1, triangleVertex2, point);
+  result = geometry::containedInTriangle(triangleVertex0, triangleVertex1, triangleVertex2, point);
   BOOST_TEST(result == geometry::TOUCHING);
 }
 
@@ -302,185 +283,149 @@ BOOST_AUTO_TEST_CASE(ContainedInHyperrectangle)
 
   // Not contained 2D
   Eigen::Vector2d testPoint2D(2, 2);
-  int             result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  int             result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << -2.0, -2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << 2.0, -2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << -2.0, 2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << 2.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << -2.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << 0.0, 2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint2D << 0.0, -2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   // Contained 2D
   testPoint2D << 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint2D << 0.25, 0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint2D << -0.25, 0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint2D << 0.25, -0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint2D << -0.25, -0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint2D << 0.49999999999, 0.49999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint2D << -0.49999999999, -0.49999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   // Touching 2D
   testPoint2D << 0.5, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.5, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.5, -0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.5, -0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.4999999999999999, 0.4999999999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.500000000000001, 0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.500000000000001, -0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.5, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.5, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.0, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.0, -0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.5, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.5, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.0, 0.499999999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.0, -0.499999999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.0, 0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.0, -0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.499999999999999, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.499999999999999, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << 0.500000000000001, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint2D << -0.500000000000001, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths2D, center2D, testPoint2D);
+  result = geometry::containedInHyperrectangle(sidelengths2D, center2D, testPoint2D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   // 3D
@@ -489,215 +434,173 @@ BOOST_AUTO_TEST_CASE(ContainedInHyperrectangle)
 
   // Not contained 3D
   Eigen::Vector3d testPoint3D(2, 2, 2);
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << -2.0, -2.0, -2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << 2.0, -2.0, 2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << -2.0, 2.0, 2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << 2.0, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << -2.0, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << 0.0, 2.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << 0.0, 0.0, 2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   testPoint3D << 0.0, 0.0, -2.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::NOT_CONTAINED);
 
   // Contained 3D
   testPoint3D << 0.0, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << 0.25, 0.25, 0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << -0.25, 0.25, 0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << 0.25, -0.25, 0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << -0.25, -0.25, 0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << 0.25, 0.25, -0.25;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << 0.49999999999, 0.49999999999, 0.49999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   testPoint3D << -0.49999999999, -0.49999999999, -0.49999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::CONTAINED);
 
   // Touching 3D
   testPoint3D << 0.5, 0.5, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.5, 0.5, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.5, -0.5, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.5, -0.5, -0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.4999999999999999, 0.4999999999999999, 0.4999999999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.500000000000001, 0.500000000000001, 0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.500000000000001, -0.500000000000001, -0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.5, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.5, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.5, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, -0.5, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.5, 0.0, -0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.5, 0.0, 0.5;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.499999999999999, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, -0.499999999999999, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.500000000000001, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, -0.500000000000001, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.499999999999999, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.499999999999999, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.500000000000001, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << -0.500000000000001, 0.0, 0.0;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.0, 0.499999999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.0, -0.499999999999999;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.0, 0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 
   testPoint3D << 0.0, 0.0, -0.500000000000001;
-  result = geometry::containedInHyperrectangle(
-      sidelengths3D, center3D, testPoint3D);
+  result = geometry::containedInHyperrectangle(sidelengths3D, center3D, testPoint3D);
   BOOST_TEST(result == geometry::TOUCHING);
 }
 

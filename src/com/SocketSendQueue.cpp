@@ -15,8 +15,9 @@ namespace asio = boost::asio;
 /// If items are left in the queue upon destruction, something went really wrong.
 SocketSendQueue::~SocketSendQueue()
 {
-  PRECICE_ASSERT(_itemQueue.empty(), "The SocketSendQueue is not empty upon destruction. "
-                                     "Make sure it always outlives all the requests pushed onto it.");
+  PRECICE_ASSERT(_itemQueue.empty(),
+                 "The SocketSendQueue is not empty upon destruction. "
+                 "Make sure it always outlives all the requests pushed onto it.");
 }
 
 void SocketSendQueue::dispatch(std::shared_ptr<Socket>      sock,
@@ -44,12 +45,10 @@ void SocketSendQueue::process()
   auto item = _itemQueue.front();
   _itemQueue.pop_front();
   _ready = false;
-  asio::async_write(*(item.sock),
-                    item.data,
-                    [item, this](boost::system::error_code const &, std::size_t) {
-                      item.callback();
-                      this->sendCompleted();
-                    });
+  asio::async_write(*(item.sock), item.data, [item, this](boost::system::error_code const &, std::size_t) {
+    item.callback();
+    this->sendCompleted();
+  });
 }
 
 } // namespace com

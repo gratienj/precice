@@ -105,8 +105,7 @@ public:
   virtual void receive(precice::span<double> itemsToReceive, Rank rankSender) override;
 
   /// Asynchronously receives an array of double values.
-  virtual PtrRequest aReceive(precice::span<double> itemsToReceive,
-                              int                   rankSender) override;
+  virtual PtrRequest aReceive(precice::span<double> itemsToReceive, int rankSender) override;
 
   virtual PtrRequest aReceive(std::vector<double> &itemsToReceive, Rank rankSender) override;
 
@@ -134,11 +133,9 @@ public:
   void send(std::vector<double> const &v, Rank rankReceiver) override;
   void receive(std::vector<double> &v, Rank rankSender) override;
 
-  virtual void prepareEstablishment(std::string const &acceptorName,
-                                    std::string const &requesterName) override;
+  virtual void prepareEstablishment(std::string const &acceptorName, std::string const &requesterName) override;
 
-  virtual void cleanupEstablishment(std::string const &acceptorName,
-                                    std::string const &requesterName) override;
+  virtual void cleanupEstablishment(std::string const &acceptorName, std::string const &requesterName) override;
 
 private:
   logging::Logger _log{"com::SocketCommunication"};

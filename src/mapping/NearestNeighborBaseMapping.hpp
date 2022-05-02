@@ -18,8 +18,8 @@ public:
    * @param[in] constraint Specifies mapping to be consistent or conservative.
    * @param[in] dimensions Dimensionality of the meshes
    */
-  NearestNeighborBaseMapping(Constraint constraint, int dimensions, bool hasGradient, std::string mappingName,
-                             std::string mappingNameShort);
+  NearestNeighborBaseMapping(
+      Constraint constraint, int dimensions, bool hasGradient, std::string mappingName, std::string mappingNameShort);
 
   /// Destructor, empty.
   virtual ~NearestNeighborBaseMapping() = default;
@@ -51,7 +51,8 @@ protected:
   mutable logging::Logger _log{"mapping::" + mappingName};
 
   /// Compute the vector offset between the matched vector and the source vector (needed for gradient mapping)
-  /// Optimization: save this as an std::vector<double> and use an Eigen::Map to create an interface that uses the correct dimensions.
+  /// Optimization: save this as an std::vector<double> and use an Eigen::Map to create an interface that uses the
+  /// correct dimensions.
   std::vector<Eigen::VectorXd> _offsetsMatched;
 
   /// Computed output vertex indices to map data from input vertices to.

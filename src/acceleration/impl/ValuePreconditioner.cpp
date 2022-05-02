@@ -8,11 +8,7 @@ namespace precice {
 namespace acceleration {
 namespace impl {
 
-ValuePreconditioner::ValuePreconditioner(
-    int maxNonConstTimeWindows)
-    : Preconditioner(maxNonConstTimeWindows)
-{
-}
+ValuePreconditioner::ValuePreconditioner(int maxNonConstTimeWindows) : Preconditioner(maxNonConstTimeWindows) {}
 
 void ValuePreconditioner::_update_(bool                   timeWindowComplete,
                                    const Eigen::VectorXd &oldValues,

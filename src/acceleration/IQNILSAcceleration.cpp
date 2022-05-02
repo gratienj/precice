@@ -25,22 +25,26 @@ using precice::cplscheme::PtrCouplingData;
 namespace precice {
 namespace acceleration {
 
-IQNILSAcceleration::IQNILSAcceleration(
-    double                  initialRelaxation,
-    bool                    forceInitialRelaxation,
-    int                     maxIterationsUsed,
-    int                     pastTimeWindowsReused,
-    int                     filter,
-    double                  singularityLimit,
-    std::vector<int>        dataIDs,
-    impl::PtrPreconditioner preconditioner)
-    : BaseQNAcceleration(initialRelaxation, forceInitialRelaxation, maxIterationsUsed, pastTimeWindowsReused,
-                         filter, singularityLimit, std::move(dataIDs), std::move(preconditioner))
+IQNILSAcceleration::IQNILSAcceleration(double                  initialRelaxation,
+                                       bool                    forceInitialRelaxation,
+                                       int                     maxIterationsUsed,
+                                       int                     pastTimeWindowsReused,
+                                       int                     filter,
+                                       double                  singularityLimit,
+                                       std::vector<int>        dataIDs,
+                                       impl::PtrPreconditioner preconditioner)
+    : BaseQNAcceleration(initialRelaxation,
+                         forceInitialRelaxation,
+                         maxIterationsUsed,
+                         pastTimeWindowsReused,
+                         filter,
+                         singularityLimit,
+                         std::move(dataIDs),
+                         std::move(preconditioner))
 {
 }
 
-void IQNILSAcceleration::initialize(
-    const DataMap &cplData)
+void IQNILSAcceleration::initialize(const DataMap &cplData)
 {
   // do common QN acceleration initialization
   BaseQNAcceleration::initialize(cplData);
@@ -54,15 +58,13 @@ void IQNILSAcceleration::initialize(
   }
 }
 
-void IQNILSAcceleration::updateDifferenceMatrices(
-    const DataMap &cplData)
+void IQNILSAcceleration::updateDifferenceMatrices(const DataMap &cplData)
 {
   // Compute residuals of secondary data
   for (int id : _secondaryDataIDs) {
     Eigen::VectorXd &secResiduals = _secondaryResiduals[id];
     PtrCouplingData  data         = cplData.at(id);
-    PRECICE_ASSERT(secResiduals.size() == data->values().size(),
-                   secResiduals.size(), data->values().size());
+    PRECICE_ASSERT(secResiduals.size() == data->values().size(), secResiduals.size(), data->values().size());
     secResiduals = data->values();
     secResiduals -= data->previousIteration();
   }
@@ -98,7 +100,8 @@ void IQNILSAcceleration::updateDifferenceMatrices(
     // Store x_tildes for secondary data
     for (int id : _secondaryDataIDs) {
       PRECICE_ASSERT(_secondaryOldXTildes[id].size() == cplData.at(id)->values().size(),
-                     _secondaryOldXTildes[id].size(), cplData.at(id)->values().size());
+                     _secondaryOldXTildes[id].size(),
+                     cplData.at(id)->values().size());
       _secondaryOldXTildes[id] = cplData.at(id)->values();
     }
   }
@@ -107,13 +110,13 @@ void IQNILSAcceleration::updateDifferenceMatrices(
   BaseQNAcceleration::updateDifferenceMatrices(cplData);
 }
 
-void IQNILSAcceleration::computeUnderrelaxationSecondaryData(
-    const DataMap &cplData)
+void IQNILSAcceleration::computeUnderrelaxationSecondaryData(const DataMap &cplData)
 {
-  //Store x_tildes for secondary data
+  // Store x_tildes for secondary data
   for (int id : _secondaryDataIDs) {
     PRECICE_ASSERT(_secondaryOldXTildes.at(id).size() == cplData.at(id)->values().size(),
-                   _secondaryOldXTildes.at(id).size(), cplData.at(id)->values().size());
+                   _secondaryOldXTildes.at(id).size(),
+                   cplData.at(id)->values().size());
     _secondaryOldXTildes[id] = cplData.at(id)->values();
   }
 
@@ -197,13 +200,14 @@ void IQNILSAcceleration::computeQNUpdate(const DataMap &cplData, Eigen::VectorXd
   xUpdate = _matrixW * c;
 
   /**
-     *  perform QN-Update step for the secondary Data
-     */
+   *  perform QN-Update step for the secondary Data
+   */
 
   // If the previous time window converged within one single iteration, nothing was added
   // to the LS system matrices and they need to be restored from the backup at time T-2
   if (not _firstTimeWindow && (getLSSystemCols() < 1) && (_timeWindowsReused == 0) && not _forceInitialRelaxation) {
-    PRECICE_DEBUG("   Last time window converged after one iteration. Need to restore the secondaryMatricesW from backup.");
+    PRECICE_DEBUG(
+        "   Last time window converged after one iteration. Need to restore the secondaryMatricesW from backup.");
     _secondaryMatricesW = _secondaryMatricesWBackup;
   }
 
@@ -232,8 +236,7 @@ void IQNILSAcceleration::computeQNUpdate(const DataMap &cplData, Eigen::VectorXd
   }
 }
 
-void IQNILSAcceleration::specializedIterationsConverged(
-    const DataMap &cplData)
+void IQNILSAcceleration::specializedIterationsConverged(const DataMap &cplData)
 {
   PRECICE_TRACE();
   if (_matrixCols.front() == 0) { // Did only one iteration
@@ -264,8 +267,7 @@ void IQNILSAcceleration::specializedIterationsConverged(
   }
 }
 
-void IQNILSAcceleration::removeMatrixColumn(
-    int columnIndex)
+void IQNILSAcceleration::removeMatrixColumn(int columnIndex)
 {
   PRECICE_ASSERT(_matrixV.cols() > 1);
   // remove column from secondary Data Matrix W

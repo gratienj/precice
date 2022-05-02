@@ -10,15 +10,8 @@
 namespace precice {
 namespace xml {
 
-XMLTag::XMLTag(
-    Listener &  listener,
-    std::string tagName,
-    Occurrence  occurrence,
-    std::string xmlNamespace)
-    : _listener(listener),
-      _name(std::move(tagName)),
-      _namespace(std::move(xmlNamespace)),
-      _occurrence(occurrence)
+XMLTag::XMLTag(Listener &listener, std::string tagName, Occurrence occurrence, std::string xmlNamespace)
+    : _listener(listener), _name(std::move(tagName)), _namespace(std::move(xmlNamespace)), _occurrence(occurrence)
 {
   if (not _namespace.empty()) {
     _fullName = _namespace + ":" + _name;
@@ -144,7 +137,10 @@ Eigen::VectorXd XMLTag::getEigenVectorXdAttributeValue(const std::string &name, 
   PRECICE_CHECK(size == dimensions,
                 "Vector attribute \"{}\" of tag <{}> is {}D, "
                 "which does not match the dimension of the {}D solver-interface.",
-                name, getFullName(), size, dimensions);
+                name,
+                getFullName(),
+                size,
+                dimensions);
 
   // Read only first "dimensions" components of the parsed vector values
   Eigen::VectorXd        result(dimensions);
@@ -335,7 +331,7 @@ void XMLTag::clear()
   _subtags.clear();
 }
 
-//NoPListener& getNoPListener()
+// NoPListener& getNoPListener()
 //{
 //  static NoPListener listener;
 //  return listener;
@@ -347,10 +343,7 @@ XMLTag getRootTag()
   return XMLTag(listener, "configuration", XMLTag::OCCUR_ONCE);
 }
 
-void configure(
-    XMLTag &                                  tag,
-    const precice::xml::ConfigurationContext &context,
-    const std::string &                       configurationFilename)
+void configure(XMLTag &tag, const precice::xml::ConfigurationContext &context, const std::string &configurationFilename)
 {
   logging::Logger _log("xml");
   PRECICE_TRACE(tag.getFullName(), configurationFilename);
@@ -379,7 +372,7 @@ std::string XMLTag::getOccurrenceString(XMLTag::Occurrence occurrence)
 } // namespace xml
 } // namespace precice
 
-//std::ostream& operator<<
+// std::ostream& operator<<
 //(
 //  std::ostream&                 os,
 //  const precice::xml::XMLTag& tag )

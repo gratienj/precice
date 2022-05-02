@@ -75,11 +75,16 @@ void MPIPortsCommunication::acceptConnection(std::string const &acceptorName,
     }
 
     PRECICE_ASSERT(requesterCommunicatorSize > 0,
-                   "Requester communicator size is {} which is invalid.", requesterCommunicatorSize);
+                   "Requester communicator size is {} which is invalid.",
+                   requesterCommunicatorSize);
     PRECICE_ASSERT(requesterCommunicatorSize == peerCount,
-                   "Current requester size from rank {} is {} but should be {}", requesterRank, requesterCommunicatorSize, peerCount);
+                   "Current requester size from rank {} is {} but should be {}",
+                   requesterRank,
+                   requesterCommunicatorSize,
+                   peerCount);
     PRECICE_ASSERT(_communicators.count(requesterRank) == 0,
-                   "Rank {} has already been connected. Duplicate requests are not allowed.", requesterRank);
+                   "Rank {} has already been connected. Duplicate requests are not allowed.",
+                   requesterRank);
 
     _communicators.emplace(requesterRank, communicator);
 
@@ -217,8 +222,7 @@ void MPIPortsCommunication::closeConnection()
   _isConnected = false;
 }
 
-void MPIPortsCommunication::prepareEstablishment(std::string const &acceptorName,
-                                                 std::string const &requesterName)
+void MPIPortsCommunication::prepareEstablishment(std::string const &acceptorName, std::string const &requesterName)
 {
   using namespace boost::filesystem;
   path dir = com::impl::localDirectory(acceptorName, requesterName, _addressDirectory);
@@ -230,8 +234,7 @@ void MPIPortsCommunication::prepareEstablishment(std::string const &acceptorName
   }
 }
 
-void MPIPortsCommunication::cleanupEstablishment(std::string const &acceptorName,
-                                                 std::string const &requesterName)
+void MPIPortsCommunication::cleanupEstablishment(std::string const &acceptorName, std::string const &requesterName)
 {
   using namespace boost::filesystem;
   path dir = com::impl::localDirectory(acceptorName, requesterName, _addressDirectory);

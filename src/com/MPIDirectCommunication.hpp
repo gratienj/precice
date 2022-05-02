@@ -82,7 +82,9 @@ public:
   /// See precice::com::Communication::closeConnection().
   virtual void closeConnection() override;
 
-  virtual void reduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive, Rank primaryRank) override;
+  virtual void reduceSum(precice::span<double const> itemsToSend,
+                         precice::span<double>       itemsToReceive,
+                         Rank                        primaryRank) override;
 
   virtual void reduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive) override;
 
@@ -90,7 +92,9 @@ public:
 
   virtual void reduceSum(int itemToSend, int &itemsToReceive) override;
 
-  virtual void allreduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive, Rank primaryRank) override;
+  virtual void allreduceSum(precice::span<double const> itemsToSend,
+                            precice::span<double>       itemsToReceive,
+                            Rank                        primaryRank) override;
 
   virtual void allreduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive) override;
 

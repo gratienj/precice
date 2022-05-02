@@ -18,23 +18,27 @@ namespace acceleration {
 
 using namespace precice::acceleration::impl;
 
-BroydenAcceleration::BroydenAcceleration(
-    double                  initialRelaxation,
-    bool                    forceInitialRelaxation,
-    int                     maxIterationsUsed,
-    int                     pastTimeWindowsReused,
-    int                     filter,
-    double                  singularityLimit,
-    std::vector<int>        dataIDs,
-    impl::PtrPreconditioner preconditioner)
-    : BaseQNAcceleration(initialRelaxation, forceInitialRelaxation, maxIterationsUsed, pastTimeWindowsReused,
-                         filter, singularityLimit, std::move(dataIDs), std::move(preconditioner)),
+BroydenAcceleration::BroydenAcceleration(double                  initialRelaxation,
+                                         bool                    forceInitialRelaxation,
+                                         int                     maxIterationsUsed,
+                                         int                     pastTimeWindowsReused,
+                                         int                     filter,
+                                         double                  singularityLimit,
+                                         std::vector<int>        dataIDs,
+                                         impl::PtrPreconditioner preconditioner)
+    : BaseQNAcceleration(initialRelaxation,
+                         forceInitialRelaxation,
+                         maxIterationsUsed,
+                         pastTimeWindowsReused,
+                         filter,
+                         singularityLimit,
+                         std::move(dataIDs),
+                         std::move(preconditioner)),
       _maxColumns(maxIterationsUsed)
 {
 }
 
-void BroydenAcceleration::initialize(
-    const DataMap &cplData)
+void BroydenAcceleration::initialize(const DataMap &cplData)
 {
   // do common QN acceleration initialization
   BaseQNAcceleration::initialize(cplData);
@@ -45,8 +49,7 @@ void BroydenAcceleration::initialize(
   _oldInvJacobian = Eigen::MatrixXd::Zero(entries, entries);
 }
 
-void BroydenAcceleration::computeUnderrelaxationSecondaryData(
-    const DataMap &cplData)
+void BroydenAcceleration::computeUnderrelaxationSecondaryData(const DataMap &cplData)
 {
   // Perform underrelaxation with initial relaxation factor for secondary data
   for (int id : _secondaryDataIDs) {
@@ -60,8 +63,7 @@ void BroydenAcceleration::computeUnderrelaxationSecondaryData(
   }
 }
 
-void BroydenAcceleration::updateDifferenceMatrices(
-    const DataMap &cplData)
+void BroydenAcceleration::updateDifferenceMatrices(const DataMap &cplData)
 {
   if (not _firstIteration) {
     _currentColumns++;
@@ -79,7 +81,7 @@ void BroydenAcceleration::computeQNUpdate(const DataMap &cplData, Eigen::VectorX
   if (_currentColumns > 1) {
     PRECICE_ERROR("Truncated IMVJ is no longer supported. Please use IMVJ with restart mode instead.");
     PRECICE_DEBUG("compute update with QR-dec");
-    //computeNewtonFactorsQRDecomposition(cplData, xUpdate);
+    // computeNewtonFactorsQRDecomposition(cplData, xUpdate);
   } else {
     PRECICE_DEBUG("compute update with Broyden");
     // ------------- update inverse Jacobian -----------
@@ -117,8 +119,7 @@ void BroydenAcceleration::computeQNUpdate(const DataMap &cplData, Eigen::VectorX
   }
 }
 
-void BroydenAcceleration::specializedIterationsConverged(
-    const DataMap &cplData)
+void BroydenAcceleration::specializedIterationsConverged(const DataMap &cplData)
 {
   _currentColumns = 0;
   // store old Jacobian

@@ -11,15 +11,20 @@ namespace com {
 namespace impl {
 /// Returns the file name for the connection information.
 /**
-   * It has the form first two letters from hash of 
-   * (acceptorName, requesterName, mesh, rank)/rest of hash.
-   */
-std::string hashedFilePath(const std::string &acceptorName, const std::string &requesterName, const std::string &meshName, Rank rank);
+ * It has the form first two letters from hash of
+ * (acceptorName, requesterName, mesh, rank)/rest of hash.
+ */
+std::string hashedFilePath(const std::string &acceptorName,
+                           const std::string &requesterName,
+                           const std::string &meshName,
+                           Rank               rank);
 
 /** Returns the local directory which is the root for storing connection information.
-   * It has the form addressDirectory/precice-run/acceptorName-requesterName
-   */
-std::string localDirectory(const std::string &acceptorName, const std::string &requesterName, const std::string &addressDirectory);
+ * It has the form addressDirectory/precice-run/acceptorName-requesterName
+ */
+std::string localDirectory(const std::string &acceptorName,
+                           const std::string &requesterName,
+                           const std::string &addressDirectory);
 } // namespace impl
 
 class ConnectionInfoPublisher {
@@ -29,10 +34,7 @@ public:
                           std::string tag,
                           int         rank,
                           std::string addressDirectory) noexcept
-      : acceptorName(std::move(acceptorName)),
-        requesterName(std::move(requesterName)),
-        tag(std::move(tag)),
-        rank(rank),
+      : acceptorName(std::move(acceptorName)), requesterName(std::move(requesterName)), tag(std::move(tag)), rank(rank),
         addressDirectory(std::move(addressDirectory))
   {
   }
@@ -41,9 +43,7 @@ public:
                           std::string requesterName,
                           std::string tag,
                           std::string addressDirectory) noexcept
-      : acceptorName(std::move(acceptorName)),
-        requesterName(std::move(requesterName)),
-        tag(std::move(tag)),
+      : acceptorName(std::move(acceptorName)), requesterName(std::move(requesterName)), tag(std::move(tag)),
         addressDirectory(std::move(addressDirectory))
   {
   }

@@ -9,29 +9,24 @@
 #include "precice/types.hpp"
 #include "utils/span_tools.hpp"
 
-template <size_t>
-struct MPI_Select_unsigned_integer_datatype;
+template <size_t> struct MPI_Select_unsigned_integer_datatype;
 
-template <>
-struct MPI_Select_unsigned_integer_datatype<1> {
+template <> struct MPI_Select_unsigned_integer_datatype<1> {
   static MPI_Datatype datatype;
 };
 MPI_Datatype MPI_Select_unsigned_integer_datatype<1>::datatype = MPI_UNSIGNED_CHAR;
 
-template <>
-struct MPI_Select_unsigned_integer_datatype<2> {
+template <> struct MPI_Select_unsigned_integer_datatype<2> {
   static MPI_Datatype datatype;
 };
 MPI_Datatype MPI_Select_unsigned_integer_datatype<2>::datatype = MPI_UNSIGNED_SHORT;
 
-template <>
-struct MPI_Select_unsigned_integer_datatype<4> {
+template <> struct MPI_Select_unsigned_integer_datatype<4> {
   static MPI_Datatype datatype;
 };
 MPI_Datatype MPI_Select_unsigned_integer_datatype<4>::datatype = MPI_UNSIGNED;
 
-template <>
-struct MPI_Select_unsigned_integer_datatype<8> {
+template <> struct MPI_Select_unsigned_integer_datatype<8> {
   static MPI_Datatype datatype;
 };
 MPI_Datatype MPI_Select_unsigned_integer_datatype<8>::datatype = MPI_UNSIGNED_LONG;
@@ -134,12 +129,7 @@ void MPICommunication::send(double itemToSend, Rank rankReceiver)
 {
   PRECICE_TRACE(itemToSend, rankReceiver);
   rankReceiver = adjustRank(rankReceiver);
-  MPI_Send(&itemToSend,
-           1,
-           MPI_DOUBLE,
-           rank(rankReceiver),
-           0,
-           communicator(rankReceiver));
+  MPI_Send(&itemToSend, 1, MPI_DOUBLE, rank(rankReceiver), 0, communicator(rankReceiver));
 }
 
 PtrRequest MPICommunication::aSend(const double &itemToSend, Rank rankReceiver)
@@ -151,12 +141,7 @@ void MPICommunication::send(int itemToSend, Rank rankReceiver)
 {
   PRECICE_TRACE(itemToSend, rankReceiver);
   rankReceiver = adjustRank(rankReceiver);
-  MPI_Send(&itemToSend,
-           1,
-           MPI_INT,
-           rank(rankReceiver),
-           0,
-           communicator(rankReceiver));
+  MPI_Send(&itemToSend, 1, MPI_INT, rank(rankReceiver), 0, communicator(rankReceiver));
 }
 
 PtrRequest MPICommunication::aSend(const int &itemToSend, Rank rankReceiver)
@@ -185,12 +170,7 @@ void MPICommunication::send(bool itemToSend, Rank rankReceiver)
 {
   PRECICE_TRACE(itemToSend, rankReceiver);
   rankReceiver = adjustRank(rankReceiver);
-  MPI_Send(&itemToSend,
-           1,
-           MPI_BOOL,
-           rank(rankReceiver),
-           0,
-           communicator(rankReceiver));
+  MPI_Send(&itemToSend, 1, MPI_BOOL, rank(rankReceiver), 0, communicator(rankReceiver));
 }
 
 PtrRequest MPICommunication::aSend(const bool &itemToSend, Rank rankReceiver)
@@ -199,13 +179,7 @@ PtrRequest MPICommunication::aSend(const bool &itemToSend, Rank rankReceiver)
   rankReceiver = adjustRank(rankReceiver);
 
   MPI_Request request;
-  MPI_Isend(const_cast<bool *>(&itemToSend),
-            1,
-            MPI_BOOL,
-            rank(rankReceiver),
-            0,
-            communicator(rankReceiver),
-            &request);
+  MPI_Isend(const_cast<bool *>(&itemToSend), 1, MPI_BOOL, rank(rankReceiver), 0, communicator(rankReceiver), &request);
 
   return PtrRequest(new MPIRequest(request));
 }
@@ -236,13 +210,8 @@ void MPICommunication::receive(precice::span<int> itemsToReceive, Rank rankSende
   rankSender = adjustRank(rankSender);
 
   MPI_Status status;
-  MPI_Recv(itemsToReceive.data(),
-           itemsToReceive.size(),
-           MPI_INT,
-           rank(rankSender),
-           0,
-           communicator(rankSender),
-           &status);
+  MPI_Recv(
+      itemsToReceive.data(), itemsToReceive.size(), MPI_INT, rank(rankSender), 0, communicator(rankSender), &status);
 }
 
 void MPICommunication::receive(precice::span<double> itemsToReceive, Rank rankSender)
@@ -251,13 +220,8 @@ void MPICommunication::receive(precice::span<double> itemsToReceive, Rank rankSe
   rankSender = adjustRank(rankSender);
 
   MPI_Status status;
-  MPI_Recv(itemsToReceive.data(),
-           itemsToReceive.size(),
-           MPI_DOUBLE,
-           rank(rankSender),
-           0,
-           communicator(rankSender),
-           &status);
+  MPI_Recv(
+      itemsToReceive.data(), itemsToReceive.size(), MPI_DOUBLE, rank(rankSender), 0, communicator(rankSender), &status);
 }
 
 PtrRequest MPICommunication::aReceive(precice::span<double> itemsToReceive, Rank rankSender)
@@ -288,13 +252,7 @@ void MPICommunication::receive(double &itemToReceive, Rank rankSender)
   rankSender = adjustRank(rankSender);
 
   MPI_Status status;
-  MPI_Recv(&itemToReceive,
-           1,
-           MPI_DOUBLE,
-           rank(rankSender),
-           0,
-           communicator(rankSender),
-           &status);
+  MPI_Recv(&itemToReceive, 1, MPI_DOUBLE, rank(rankSender), 0, communicator(rankSender), &status);
   PRECICE_DEBUG("Received {} from rank {}", itemToReceive, rankSender);
 }
 
@@ -309,13 +267,7 @@ void MPICommunication::receive(int &itemToReceive, Rank rankSender)
   rankSender = adjustRank(rankSender);
 
   MPI_Status status;
-  MPI_Recv(&itemToReceive,
-           1,
-           MPI_INT,
-           rank(rankSender),
-           0,
-           communicator(rankSender),
-           &status);
+  MPI_Recv(&itemToReceive, 1, MPI_INT, rank(rankSender), 0, communicator(rankSender), &status);
   PRECICE_DEBUG("Received {} from rank {}", itemToReceive, rankSender);
 }
 
@@ -325,13 +277,7 @@ PtrRequest MPICommunication::aReceive(int &itemToReceive, Rank rankSender)
   rankSender = adjustRank(rankSender);
 
   MPI_Request request;
-  MPI_Irecv(&itemToReceive,
-            1,
-            MPI_INT,
-            rank(rankSender),
-            0,
-            communicator(rankSender),
-            &request);
+  MPI_Irecv(&itemToReceive, 1, MPI_INT, rank(rankSender), 0, communicator(rankSender), &request);
 
   return PtrRequest(new MPIRequest(request));
 }
@@ -342,13 +288,7 @@ void MPICommunication::receive(bool &itemToReceive, Rank rankSender)
   rankSender = adjustRank(rankSender);
 
   MPI_Status status;
-  MPI_Recv(&itemToReceive,
-           1,
-           MPI_BOOL,
-           rank(rankSender),
-           0,
-           communicator(rankSender),
-           &status);
+  MPI_Recv(&itemToReceive, 1, MPI_BOOL, rank(rankSender), 0, communicator(rankSender), &status);
   PRECICE_DEBUG("Received {} from rank {}", itemToReceive, rankSender);
 }
 
@@ -358,13 +298,7 @@ PtrRequest MPICommunication::aReceive(bool &itemToReceive, Rank rankSender)
   rankSender = adjustRank(rankSender);
 
   MPI_Request request;
-  MPI_Irecv(&itemToReceive,
-            1,
-            MPI_BOOL,
-            rank(rankSender),
-            0,
-            communicator(rankSender),
-            &request);
+  MPI_Irecv(&itemToReceive, 1, MPI_BOOL, rank(rankSender), 0, communicator(rankSender), &request);
 
   return PtrRequest(new MPIRequest(request));
 }
@@ -373,8 +307,7 @@ void MPICommunication::send(std::vector<int> const &v, Rank rankReceiver)
 {
   PRECICE_TRACE(rankReceiver);
   rankReceiver = adjustRank(rankReceiver);
-  MPI_Send(const_cast<int *>(v.data()), v.size(), MPI_INT,
-           rank(rankReceiver), 0, communicator(rankReceiver));
+  MPI_Send(const_cast<int *>(v.data()), v.size(), MPI_INT, rank(rankReceiver), 0, communicator(rankReceiver));
 }
 
 void MPICommunication::receive(std::vector<int> &v, Rank rankSender)
@@ -386,16 +319,14 @@ void MPICommunication::receive(std::vector<int> &v, Rank rankSender)
   MPI_Probe(rank(rankSender), 0, communicator(rankSender), &status);
   MPI_Get_count(&status, MPI_INT, &length);
   v.resize(length);
-  MPI_Recv(v.data(), length, MPI_INT, rank(rankSender),
-           0, communicator(rankSender), MPI_STATUS_IGNORE);
+  MPI_Recv(v.data(), length, MPI_INT, rank(rankSender), 0, communicator(rankSender), MPI_STATUS_IGNORE);
 }
 
 void MPICommunication::send(std::vector<double> const &v, Rank rankReceiver)
 {
   PRECICE_TRACE(rankReceiver);
   rankReceiver = adjustRank(rankReceiver);
-  MPI_Send(const_cast<double *>(v.data()), v.size(), MPI_DOUBLE,
-           rank(rankReceiver), 0, communicator(rankReceiver));
+  MPI_Send(const_cast<double *>(v.data()), v.size(), MPI_DOUBLE, rank(rankReceiver), 0, communicator(rankReceiver));
 }
 
 void MPICommunication::receive(std::vector<double> &v, Rank rankSender)
@@ -407,8 +338,7 @@ void MPICommunication::receive(std::vector<double> &v, Rank rankSender)
   MPI_Probe(rank(rankSender), 0, communicator(rankSender), &status);
   MPI_Get_count(&status, MPI_DOUBLE, &length);
   v.resize(length, '\0');
-  MPI_Recv(v.data(), length, MPI_DOUBLE, rank(rankSender),
-           0, communicator(rankSender), MPI_STATUS_IGNORE);
+  MPI_Recv(v.data(), length, MPI_DOUBLE, rank(rankSender), 0, communicator(rankSender), MPI_STATUS_IGNORE);
 }
 
 } // namespace com

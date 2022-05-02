@@ -51,35 +51,24 @@ namespace impl {
 /// Holds coupling state of one participating solver in coupled simulation.
 class Participant {
 public:
-  enum MappingConstants {
-    MAPPING_LINEAR_CONSERVATIVE,
-    MAPPING_LINEAR_CONSISTENT,
-    MAPPING_DIRECT
-  };
+  enum MappingConstants { MAPPING_LINEAR_CONSERVATIVE, MAPPING_LINEAR_CONSISTENT, MAPPING_DIRECT };
 
   /**
    * @brief Constructor.
    *
    * @param[in] name Name of the participant. Has to be unique.
    */
-  Participant(
-      std::string                 name,
-      mesh::PtrMeshConfiguration &meshConfig);
+  Participant(std::string name, mesh::PtrMeshConfiguration &meshConfig);
 
   virtual ~Participant();
 
   /// @name Configuration interface
   /// @{
   /// Adds a configured write \ref Data to the Participant
-  void addWriteData(
-      const mesh::PtrData &data,
-      const mesh::PtrMesh &mesh);
+  void addWriteData(const mesh::PtrData &data, const mesh::PtrMesh &mesh);
 
   /// Adds a configured read \ref Data to the Participant
-  void addReadData(
-      const mesh::PtrData &data,
-      const mesh::PtrMesh &mesh,
-      int                  interpolationOrder);
+  void addReadData(const mesh::PtrData &data, const mesh::PtrMesh &mesh, int interpolationOrder);
 
   /// Adds a configured read \ref Mapping to the Participant
   void addReadMappingContext(MappingContext *mappingContext);
@@ -334,10 +323,7 @@ private:
 
   std::unique_ptr<utils::ManageUniqueIDs> _meshIdManager;
 
-  template <typename ELEMENT_T>
-  bool isDataValid(
-      const std::vector<ELEMENT_T> &data,
-      const ELEMENT_T &             newElement) const;
+  template <typename ELEMENT_T> bool isDataValid(const std::vector<ELEMENT_T> &data, const ELEMENT_T &newElement) const;
 
   void checkDuplicatedUse(const mesh::PtrMesh &mesh);
 
@@ -351,9 +337,7 @@ private:
 // --------------------------------------------------------- HEADER DEFINITIONS
 
 template <typename ELEMENT_T>
-bool Participant::isDataValid(
-    const std::vector<ELEMENT_T> &data,
-    const ELEMENT_T &             newElement) const
+bool Participant::isDataValid(const std::vector<ELEMENT_T> &data, const ELEMENT_T &newElement) const
 {
   for (size_t i = 0; i < data.size(); i++) {
     if (data[i].name == newElement.name) {

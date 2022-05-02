@@ -54,9 +54,7 @@ public:
   Communication &operator=(Communication &&) = delete;
 
   /// Destructor, empty.
-  virtual ~Communication()
-  {
-  }
+  virtual ~Communication() {}
 
   /// @name Connection Setup
   /// @{
@@ -172,14 +170,11 @@ public:
    *
    * @param[in] participantName Name of the calling participant.
    * @param[in] tag Tag for establishing this connection
-   * @param[in] rank The current rank in the participant 
+   * @param[in] rank The current rank in the participant
    * @param[in] size Total size of the participant
    *
    */
-  void connectIntraComm(std::string const &participantName,
-                        std::string const &tag,
-                        int                rank,
-                        int                size);
+  void connectIntraComm(std::string const &participantName, std::string const &tag, int rank, int size);
 
   /**
    * @brief Disconnects from communication space, i.e. participant.
@@ -194,8 +189,7 @@ public:
    * @param[in] acceptorName Name of calling participant.
    * @param[in] requesterName Name of remote participant to connect to.
    */
-  virtual void prepareEstablishment(std::string const &acceptorName,
-                                    std::string const &requesterName) {}
+  virtual void prepareEstablishment(std::string const &acceptorName, std::string const &requesterName) {}
 
   /**
    * @brief Clean-up environment used to establish the communication.
@@ -203,8 +197,7 @@ public:
    * @param[in] acceptorName Name of calling participant.
    * @param[in] requesterName Name of remote participant to connect to.
    */
-  virtual void cleanupEstablishment(std::string const &acceptorName,
-                                    std::string const &requesterName) {}
+  virtual void cleanupEstablishment(std::string const &acceptorName, std::string const &requesterName) {}
 
   /// @}
 
@@ -212,14 +205,18 @@ public:
   /// @{
 
   /// Performs a reduce summation on the rank given by primaryRank
-  virtual void reduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive, Rank primaryRank);
+  virtual void reduceSum(precice::span<double const> itemsToSend,
+                         precice::span<double>       itemsToReceive,
+                         Rank                        primaryRank);
   /// Performs a reduce summation on the primary rank, every other rank has to call reduceSum
   virtual void reduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive);
 
   virtual void reduceSum(int itemToSend, int &itemToReceive, Rank primaryRank);
   virtual void reduceSum(int itemsToSend, int &itemsToReceive);
 
-  virtual void allreduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive, Rank primaryRank);
+  virtual void allreduceSum(precice::span<double const> itemsToSend,
+                            precice::span<double>       itemsToReceive,
+                            Rank                        primaryRank);
   virtual void allreduceSum(precice::span<double const> itemsToSend, precice::span<double> itemsToReceive);
 
   virtual void allreduceSum(double itemToSend, double &itemToReceive, Rank primaryRank);

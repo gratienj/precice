@@ -16,8 +16,7 @@ using std::cout;
 using std::rand;
 using std::vector;
 
-vector<double>
-getData()
+vector<double> getData()
 {
   int rank = utils::MasterSlave::getRank();
 
@@ -37,8 +36,7 @@ getData()
   return std::move(vector<double>(data[rank], data[rank] + size[rank]));
 }
 
-vector<double>
-getExpectedData()
+vector<double> getExpectedData()
 {
   int rank = utils::MasterSlave::getRank();
 
@@ -114,22 +112,17 @@ int main(int argc, char **argv)
     utils::Parallel::splitCommunicator("Slave");
   }
 
-  utils::MasterSlave::getCommunication() =
-      com::PtrCommunication(new com::MPIDirectCommunication);
+  utils::MasterSlave::getCommunication() = com::PtrCommunication(new com::MPIDirectCommunication);
 
   int rankOffset = 1;
 
   if (utils::MasterSlave::isPrimary()) {
-    utils::MasterSlave::getCommunication()->acceptConnection(
-        "Master", "Slave", utils::MasterSlave::getRank(), 1);
+    utils::MasterSlave::getCommunication()->acceptConnection("Master", "Slave", utils::MasterSlave::getRank(), 1);
     utils::MasterSlave::getCommunication()->setRankOffset(rankOffset);
   } else {
     assertion(utils::MasterSlave::isSecondary());
     utils::MasterSlave::getCommunication()->requestConnection(
-        "Master",
-        "Slave",
-        utils::MasterSlave::getRank() - rankOffset,
-        utils::MasterSlave::getSize() - rankOffset);
+        "Master", "Slave", utils::MasterSlave::getRank() - rankOffset, utils::MasterSlave::getSize() - rankOffset);
   }
 
   mesh::PtrMesh mesh(new mesh::Mesh("Mesh", 2, true));
@@ -154,10 +147,9 @@ int main(int argc, char **argv)
     mesh->getVertexDistribution()[4].push_back(9);
   }
 
-  std::vector<com::PtrCommunicationFactory> cfs(
-      {com::PtrCommunicationFactory(new com::SocketCommunicationFactory)});
+  std::vector<com::PtrCommunicationFactory> cfs({com::PtrCommunicationFactory(new com::SocketCommunicationFactory)});
 
-  //std::vector<com::PtrCommunicationFactory> cfs(
+  // std::vector<com::PtrCommunicationFactory> cfs(
   //     {com::PtrCommunicationFactory(new com::SocketCommunicationFactory),
   //      com::PtrCommunicationFactory(new com::MPIPortsCommunicationFactory)});
 
