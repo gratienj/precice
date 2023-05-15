@@ -256,4 +256,14 @@ void SolverInterface::writeGradientData(
   _impl->writeGradientData(toSV(meshName), toSV(dataName), vertices, gradients);
 }
 
+void SolverInterface::pushProfilingSection(::precice::string_view sectionName)
+{
+  _impl->pushProfilingSection(toSV(sectionName));
+}
+
+void SolverInterface::popProfilingSection()
+{
+  _impl->popProfilingSection();
+}
+
 } // namespace precice

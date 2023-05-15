@@ -108,7 +108,10 @@ public:
 
   void pop();
 
+  void push();
+
 private:
+  std::string prefix;
   std::string previousName = "";
 };
 

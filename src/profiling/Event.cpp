@@ -60,9 +60,9 @@ void Event::addData(const std::string &key, int value)
 // -----------------------------------------------------------------------
 
 ScopedEventPrefix::ScopedEventPrefix(std::string const &name)
+    : prefix(name)
 {
-  previousName = EventRegistry::instance().prefix;
-  EventRegistry::instance().prefix += name;
+  push();
 }
 
 ScopedEventPrefix::~ScopedEventPrefix()
@@ -73,6 +73,12 @@ ScopedEventPrefix::~ScopedEventPrefix()
 void ScopedEventPrefix::pop()
 {
   EventRegistry::instance().prefix = previousName;
+}
+
+void ScopedEventPrefix::push()
+{
+  previousName = EventRegistry::instance().prefix;
+  EventRegistry::instance().prefix += prefix;
 }
 
 } // namespace precice::profiling

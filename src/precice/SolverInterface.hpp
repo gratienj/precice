@@ -813,6 +813,14 @@ public:
 
   ///@}
 
+  /** @name Profiling API
+   * Allows to add profiling section to user-code
+   */
+  ///@{
+  void pushProfilingSection(::precice::string_view sectionName);
+  void popProfilingSection();
+  ///@}
+
   /// Disable copy construction
   SolverInterface(const SolverInterface &copy) = delete;
 

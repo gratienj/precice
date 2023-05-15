@@ -158,7 +158,8 @@ SolverInterfaceImpl::SolverInterfaceImpl(
 
   e.stop();
   sep.pop();
-  _solverInitEvent = std::make_unique<profiling::Event>("solver.initialize", profiling::Fundamental, profiling::Synchronize);
+  _solverInitEvent       = std::make_unique<profiling::Event>("solver.initialize", profiling::Fundamental, profiling::Synchronize);
+  _solverInitEventPrefix = std::make_unique<profiling::ScopedEventPrefix>("solver.initialize/");
 }
 
 SolverInterfaceImpl::~SolverInterfaceImpl()
@@ -261,7 +262,14 @@ void SolverInterfaceImpl::initialize()
                 "Initial data has to be written to preCICE before calling initialize(). "
                 "After defining your mesh, call requiresInitialData() to check if the participant is required to write initial data using an appropriate write...Data() function.");
 
+  if (!_userEventStack.empty()) {
+    PRECICE_WARN("User events were still active reaching initialize. Please stop all events in the user-code.");
+    while (!_userEventStack.empty()) {
+      _userEventStack.pop_back();
+    }
+  }
   _solverInitEvent.reset();
+  _solverInitEventPrefix.reset();
   Event                        e("initialize", profiling::Fundamental, profiling::Synchronize);
   profiling::ScopedEventPrefix sep("initialize/");
 
@@ -370,7 +378,8 @@ void SolverInterfaceImpl::initialize()
 
   _state = State::Initialized;
   PRECICE_INFO(_couplingScheme->printCouplingState());
-  _solverAdvanceEvent = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
+  _solverAdvanceEvent       = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
+  _solverAdvanceEventPrefix = std::make_unique<profiling::ScopedEventPrefix>("solver.advance/");
 }
 
 void SolverInterfaceImpl::advance(
@@ -379,9 +388,17 @@ void SolverInterfaceImpl::advance(
 
   PRECICE_TRACE(computedTimeStepSize);
 
+  if (!_userEventStack.empty()) {
+    PRECICE_WARN("User events were still active reaching advance. Please stop all events in the user-code.");
+    while (!_userEventStack.empty()) {
+      _userEventStack.pop_back();
+    }
+  }
+
   // Events for the solver time, stopped when we enter, restarted when we leave advance
   PRECICE_ASSERT(_solverAdvanceEvent, "The advance event is created in initialize");
   _solverAdvanceEvent->stop();
+  _solverAdvanceEventPrefix->pop();
 
   Event                        e("advance", profiling::Fundamental, profiling::Synchronize);
   profiling::ScopedEventPrefix sep("advance/");
@@ -441,6 +458,7 @@ void SolverInterfaceImpl::advance(
   sep.pop();
   e.stop();
   _solverAdvanceEvent->start();
+  _solverAdvanceEventPrefix->push();
 }
 
 void SolverInterfaceImpl::finalize()
@@ -448,8 +466,16 @@ void SolverInterfaceImpl::finalize()
   PRECICE_TRACE();
   PRECICE_CHECK(_state != State::Finalized, "finalize() may only be called once.");
 
+  if (!_userEventStack.empty()) {
+    PRECICE_WARN("User events were still active reaching finalize. Please stop all events in the user-code.");
+    while (!_userEventStack.empty()) {
+      _userEventStack.pop_back();
+    }
+  }
+
   // Events for the solver time, finally stopped here
   _solverAdvanceEvent.reset();
+  _solverAdvanceEventPrefix.reset();
 
   Event                        e("finalize", profiling::Fundamental);
   profiling::ScopedEventPrefix sep("finalize/");
@@ -1186,6 +1212,17 @@ void SolverInterfaceImpl::getMeshVerticesAndIDs(
     ids[i]           = vertices[i].getID();
     posMatrix.col(i) = vertices[i].getCoords();
   }
+}
+
+void SolverInterfaceImpl::pushProfilingSection(std::string_view sectionName)
+{
+  _userEventStack.emplace_back(std::string{sectionName}, profiling::Fundamental);
+}
+
+void SolverInterfaceImpl::popProfilingSection()
+{
+  PRECICE_CHECK(!_userEventStack.empty(), "There are no profiling events to pop. The user-event stack is empty.")
+  _userEventStack.pop_back();
 }
 
 void SolverInterfaceImpl::configureM2Ns(

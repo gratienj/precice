@@ -18,13 +18,10 @@
 #include "precice/impl/DataContext.hpp"
 #include "precice/impl/SharedPointer.hpp"
 #include "precice/types.hpp"
+#include "profiling/Event.hpp"
 #include "utils/MultiLock.hpp"
 
 namespace precice {
-
-namespace profiling {
-class Event;
-}
 
 namespace config {
 class SolverInterfaceConfiguration;
@@ -269,6 +266,9 @@ public:
 
   ///@}
 
+  void pushProfilingSection(std::string_view sectionName);
+  void popProfilingSection();
+
   /**
    * @brief Allows to access a registered mesh
    */
@@ -413,8 +413,11 @@ private:
   friend struct Integration::Serial::Whitebox::TestConfigurationPeano;
   friend struct Integration::Serial::Whitebox::TestConfigurationComsol;
 
-  std::unique_ptr<profiling::Event> _solverInitEvent;
-  std::unique_ptr<profiling::Event> _solverAdvanceEvent;
+  std::unique_ptr<profiling::Event>             _solverInitEvent;
+  std::unique_ptr<profiling::ScopedEventPrefix> _solverInitEventPrefix;
+  std::unique_ptr<profiling::Event>             _solverAdvanceEvent;
+  std::unique_ptr<profiling::ScopedEventPrefix> _solverAdvanceEventPrefix;
+  std::vector<profiling::Event>                 _userEventStack;
 };
 
 } // namespace impl
