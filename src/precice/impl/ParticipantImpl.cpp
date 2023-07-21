@@ -53,10 +53,12 @@
 #include "precice/impl/MeshContext.hpp"
 #include "precice/impl/ParticipantState.hpp"
 #include "precice/impl/ReadDataContext.hpp"
+#include "precice/impl/ReadGlobalDataContext.hpp"
 #include "precice/impl/ValidationMacros.hpp"
 #include "precice/impl/WatchIntegral.hpp"
 #include "precice/impl/WatchPoint.hpp"
 #include "precice/impl/WriteDataContext.hpp"
+#include "precice/impl/WriteGlobalDataContext.hpp"
 #include "precice/impl/versions.hpp"
 #include "precice/types.hpp"
 #include "profiling/Event.hpp"
@@ -326,6 +328,9 @@ void ParticipantImpl::initialize()
   for (auto &context : _accessor->writeDataContexts()) {
     context.storeBufferedData(relativeTime);
   }
+  for (auto &context : _accessor->writeGlobalDataContexts()) {
+    context.storeBufferedData(relativeTime);
+  }
 
   mapWrittenData();
   performDataActions({action::Action::WRITE_MAPPING_POST}, 0.0);
@@ -384,6 +389,9 @@ void ParticipantImpl::advance(
   for (auto &context : _accessor->writeDataContexts()) {
     context.storeBufferedData(relativeTime);
   }
+  for (auto &context : _accessor->writeGlobalDataContexts()) {
+    context.storeBufferedData(relativeTime);
+  }
 
   if (_couplingScheme->willDataBeExchanged(0.0)) {
     mapWrittenData();
@@ -409,6 +417,12 @@ void ParticipantImpl::advance(
       context.resetInitialGuesses();
     }
     for (auto &context : _accessor->writeDataContexts()) {
+      context.resetInitialGuesses();
+    }
+    for (auto &context : _accessor->readGlobalDataContexts()) {
+      context.resetInitialGuesses();
+    }
+    for (auto &context : _accessor->writeGlobalDataContexts()) {
       context.resetInitialGuesses();
     }
   }
@@ -1094,6 +1108,68 @@ void ParticipantImpl::writeGradientData(
   context.writeGradientsIntoDataBuffer(vertices, gradients);
 }
 
+void ParticipantImpl::writeGlobalData(
+    std::string_view              dataName,
+    ::precice::span<const double> value)
+{
+  PRECICE_EXPERIMENTAL_API();
+  PRECICE_TRACE(dataName);
+  PRECICE_CHECK(_state != State::Finalized, "writeGlobalData(...) cannot be called after finalize().");
+  // PRECICE_REQUIRE_DATA_WRITE(dataName);
+  // TODO: write an analog of this for global.
+
+  WriteGlobalDataContext &context = _accessor->writeGlobalDataContext(dataName);
+
+  const auto dataDims = context.getDataDimensions();
+  // Handling inconsistent sizes
+  PRECICE_CHECK(dataDims == value.size(),
+                "Input sizes are inconsistent attempting to write {}D global data \"{}\". "
+                "You passed {} data components, but {} data components were expected.",
+                dataDims, dataName,
+                value.size(), dataDims);
+
+  // Sizes are correct at this point
+  PRECICE_VALIDATE_DATA(value.data(), value.size());
+
+  context.writeValueIntoDataBuffer(value);
+}
+
+void ParticipantImpl::readGlobalData(
+    std::string_view        dataName,
+    double                  relativeReadTime,
+    ::precice::span<double> value) const
+{
+  PRECICE_EXPERIMENTAL_API();
+  PRECICE_TRACE(dataName, relativeReadTime);
+  PRECICE_CHECK(_state != State::Finalized, "readGlobalData(...) cannot be called after finalize().");
+  PRECICE_CHECK(relativeReadTime <= _couplingScheme->getNextTimeStepMaxSize(), "readGlobalData(...) cannot sample data outside of current time window.");
+  PRECICE_CHECK(relativeReadTime >= 0, "readGlobalData(...) cannot sample data before the current time.");
+
+  double normalizedReadTime;
+  if (_couplingScheme->hasTimeWindowSize()) {
+    double timeStepStart = _couplingScheme->getTimeWindowSize() - _couplingScheme->getNextTimeStepMaxSize();
+    double readTime      = timeStepStart + relativeReadTime;
+    normalizedReadTime   = readTime / _couplingScheme->getTimeWindowSize(); //@todo might be moved into coupling scheme
+  } else {                                                                  // if this participant defines time window size through participant-first method
+    PRECICE_CHECK(relativeReadTime == _couplingScheme->getNextTimeStepMaxSize(), "Waveform relaxation is not allowed for solver that sets the time step size");
+    normalizedReadTime = 1; // by default read at end of window.
+  }
+
+  // PRECICE_REQUIRE_DATA_READ(dataName); // TODO: write global data version of this macro
+
+  ReadGlobalDataContext &context  = _accessor->readGlobalDataContext(dataName);
+  const auto             dataDims = context.getDataDimensions();
+
+  // Handling inconsistent sizes
+  PRECICE_CHECK(dataDims == value.size(),
+                "Input sizes are inconsistent attempting to read {}D global data \"{}\". "
+                "You passed {} data components, but {} data components were expected.",
+                dataDims, dataName,
+                value.size(), dataDims);
+
+  context.readValue(normalizedReadTime, value);
+}
+
 void ParticipantImpl::setMeshAccessRegion(
     const std::string_view        meshName,
     ::precice::span<const double> boundingBox) const
@@ -1404,6 +1480,9 @@ void ParticipantImpl::resetWrittenData(bool isAtWindowEnd, bool isTimeWindowComp
 {
   PRECICE_TRACE();
   for (auto &context : _accessor->writeDataContexts()) {
+    context.resetData(isAtWindowEnd, isTimeWindowComplete);
+  }
+  for (auto &context : _accessor->writeGlobalDataContexts()) {
     context.resetData(isAtWindowEnd, isTimeWindowComplete);
   }
 }

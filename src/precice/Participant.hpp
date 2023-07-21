@@ -607,6 +607,27 @@ public:
       ::precice::span<const double>   values);
 
   /**
+   * @brief Writes global data
+   *
+   * This function writes a specified value to a global data object.
+   * Global data is data that has no location in space and that is not associated to any mesh.
+   * Values are provided as a block of continuous memory defined by value.
+   *
+   * The 1D/Scalar-format of values is (d)
+   * The 2D-format of value is (dx, dy)
+   * The 3D-format of value is (dx, dy, dz)
+   *
+   * @param[in] dataName the name of the data to write to.
+   * @param[in] value the values to write to preCICE.
+   *
+   * @pre value has the same size as that of the global data specified by dataName
+   *
+   */
+  void writeGlobalData(
+      ::precice::string_view        dataName,
+      ::precice::span<const double> value);
+
+  /**
    * @brief Reads data values from a mesh. Values correspond to a given point in time relative to the beginning of the current timestep.
    *
    * This function reads values of specified vertices from data of a mesh.
@@ -642,6 +663,35 @@ public:
       ::precice::span<const VertexID> vertices,
       double                          relativeReadTime,
       ::precice::span<double>         values) const;
+
+  /**
+   * @brief Reads value from a global data object. Value corresponds to a given point in time relative to the beginning of the current timestep.
+   *
+   * This function reads the value of a global data object.
+   * Global data is data that has no location in space and that is not associated to any mesh.
+   * Value is read into a block of continuous memory.
+   *
+   * The 1D/Scalar-format of values is (d)
+   * The 2D-format of value is (dx, dy)
+   * The 3D-format of value is (dx, dy, dz)
+   *
+   * The data is read at relativeReadTime, which indicates the point in time measured from the beginning of the current time step.
+   * relativeReadTime = 0 corresponds to data at the beginning of the time step. Assuming that the user will call advance(dt) at the
+   * end of the time step, dt indicates the size of the current time step. Then relativeReadTime = dt corresponds to the data at
+   * the end of the time step.
+   *
+   * @param[in] dataName the name of the data to read from.
+   * @param[in] relativeReadTime Point in time where data is read relative to the beginning of the current time step.
+   * @param[out] value the destination memory to write the data to.
+   *
+   * @pre value has the same size as that of the data object specified by dataName
+   *
+   * @post value contains the read data as specified in the above format.
+   */
+  void readGlobalData(
+      ::precice::string_view  dataName,
+      double                  relativeReadTime,
+      ::precice::span<double> value) const;
 
   ///@}
 

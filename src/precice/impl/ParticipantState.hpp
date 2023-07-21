@@ -19,7 +19,9 @@
 #include "mesh/SharedPointer.hpp"
 #include "partition/ReceivedPartition.hpp"
 #include "precice/impl/ReadDataContext.hpp"
+#include "precice/impl/ReadGlobalDataContext.hpp"
 #include "precice/impl/WriteDataContext.hpp"
+#include "precice/impl/WriteGlobalDataContext.hpp"
 #include "precice/types.hpp"
 #include "utils/IntraComm.hpp"
 #include "utils/ManageUniqueIDs.hpp"
@@ -102,6 +104,14 @@ public:
       const mesh::PtrData &data,
       const mesh::PtrMesh &mesh);
 
+  /// Adds a configured \ref GlobalData to the ParticipantState
+  void addReadGlobalData(
+      const mesh::PtrData &data);
+
+  /// Adds a configured write \ref GlobalData to the ParticipantState
+  void addWriteGlobalData(
+      const mesh::PtrData &data);
+
   /// Adds a configured read \ref Mapping to the ParticipantState
   void addReadMappingContext(const MappingContext &mappingContext);
 
@@ -170,6 +180,26 @@ public:
    */
   WriteDataContext &writeDataContext(std::string_view mesh, std::string_view data);
 
+  /** Provides access to \ref WriteGlobalDataContext
+   * @pre there exists a \ref WriteGlobalDataContext for \ref data
+   */
+  const WriteGlobalDataContext &writeGlobalDataContext(std::string_view data) const;
+
+  /** Provides access to \ref WriteGlobalDataContext
+   * @pre there exists a \ref WriteGlobalDataContext for \ref data
+   */
+  WriteGlobalDataContext &writeGlobalDataContext(std::string_view data);
+
+  /** Provides access to \ref WriteGlobalDataContext
+   * @pre there exists a \ref WriteGlobalDataContext for \ref data
+   */
+  const ReadGlobalDataContext &readGlobalDataContext(std::string_view data) const;
+
+  /** Provides access to \ref WriteGlobalDataContext
+   * @pre there exists a \ref WriteGlobalDataContext for \ref data
+   */
+  ReadGlobalDataContext &readGlobalDataContext(std::string_view data);
+
   /** Provides access to all \ref WriteDataContext objects
    * @remarks does not contain nullptr.
    */
@@ -186,6 +216,22 @@ public:
     return _readDataContexts | boost::adaptors::map_values;
   }
 
+  /** Provides access to all \ref WriteGlobalDataContext objects
+   * @remarks does not contain nullptr.
+   */
+  auto writeGlobalDataContexts()
+  {
+    return _writeGlobalDataContexts | boost::adaptors::map_values;
+  }
+
+  /** Provides access to all \ref ReadGlobalDataContext objects
+   * @remarks does not contain nullptr.
+   */
+  auto readGlobalDataContexts()
+  {
+    return _readGlobalDataContexts | boost::adaptors::map_values;
+  }
+
   /// Is the dataID know to preCICE?
   bool hasData(std::string_view mesh, std::string_view data) const;
 
@@ -198,6 +244,12 @@ public:
   /// Is the participant allowed to write the data?
   bool isDataWrite(std::string_view mesh, std::string_view data) const;
   /// @}
+
+  /// Is the participant allowed to read the global data?
+  bool isGlobalDataRead(std::string_view data) const;
+
+  /// Is the participant allowed to write the global data?
+  bool isGlobalDataWrite(std::string_view data) const;
 
   /// @name Mesh queries
   /// @{
@@ -348,6 +400,10 @@ private:
 
   DataMap<ReadDataContext> _readDataContexts;
 
+  std::map<std::string, ReadGlobalDataContext> _readGlobalDataContexts;
+
+  std::map<std::string, WriteGlobalDataContext> _writeGlobalDataContexts;
+
   bool _useIntraComm = false;
 
   std::unique_ptr<utils::ManageUniqueIDs> _meshIdManager;
@@ -360,6 +416,8 @@ private:
   void checkDuplicatedUse(std::string_view mesh);
 
   void checkDuplicatedData(std::string_view mesh, std::string_view data);
+
+  void checkDuplicatedGlobalData(std::string_view data);
 
   /// To allow white box tests.
   friend struct Integration::Serial::Whitebox::TestConfigurationPeano;

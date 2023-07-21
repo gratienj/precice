@@ -234,6 +234,21 @@ void Participant::readData(
   _impl->readData(toSV(meshName), toSV(dataName), vertices, relativeReadTime, values);
 }
 
+void Participant::writeGlobalData(
+    ::precice::string_view        dataName,
+    ::precice::span<const double> value)
+{
+  _impl->writeGlobalData(toSV(dataName), value);
+}
+
+void Participant::readGlobalData(
+    ::precice::string_view  dataName,
+    double                  relativeReadTime,
+    ::precice::span<double> value) const
+{
+  _impl->readGlobalData(toSV(dataName), relativeReadTime, value);
+}
+
 void Participant::setMeshAccessRegion(::precice::string_view        meshName,
                                       ::precice::span<const double> boundingBox) const
 {

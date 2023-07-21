@@ -21,6 +21,7 @@
 #include "mapping/Mapping.hpp"
 #include "mesh/Data.hpp"
 #include "mesh/Mesh.hpp"
+#include "mesh/config/DataConfiguration.hpp"
 #include "mesh/config/MeshConfiguration.hpp"
 #include "partition/ReceivedPartition.hpp"
 #include "precice/impl/MappingContext.hpp"
@@ -67,10 +68,11 @@ ParticipantConfiguration::ParticipantConfiguration(
                           .setDocumentation("Name of the data.");
   tagWriteData.addAttribute(attrDataName);
   tagReadData.addAttribute(attrDataName);
-  auto attrMesh = XMLAttribute<std::string>(ATTR_MESH)
+  auto attrMesh = XMLAttribute<std::string>(ATTR_MESH, "")
                       .setDocumentation(
                           "Mesh the data belongs to. If data should be read/written to several "
-                          "meshes, this has to be specified separately for each mesh.");
+                          "meshes, this has to be specified separately for each mesh."
+                          "For global data, omit this attribute.");
   tagWriteData.addAttribute(attrMesh);
   tagReadData.addAttribute(attrMesh);
 
@@ -315,21 +317,31 @@ void ParticipantConfiguration::xmlTagCallback(
   } else if (tag.getName() == TAG_WRITE) {
     const std::string &dataName = tag.getStringAttributeValue(ATTR_NAME);
     std::string        meshName = tag.getStringAttributeValue(ATTR_MESH);
-    mesh::PtrMesh      mesh     = _meshConfig->getMesh(meshName);
-    PRECICE_CHECK(mesh,
-                  R"(Participant "{}" attempts to read data "{}" from an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
-                  _participants.back()->getName(), dataName, meshName, meshName);
-    mesh::PtrData data = getData(mesh, dataName);
-    _participants.back()->addWriteData(data, mesh);
+    if (meshName.empty()) { // no mesh implies it's global data
+      mesh::PtrData data = getGlobalData(dataName);
+      _participants.back()->addWriteGlobalData(data);
+    } else {
+      mesh::PtrMesh mesh = _meshConfig->getMesh(meshName);
+      PRECICE_CHECK(mesh,
+                    R"(Participant "{}" attempts to read data "{}" from an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
+                    _participants.back()->getName(), dataName, meshName, meshName);
+      mesh::PtrData data = getData(mesh, dataName);
+      _participants.back()->addWriteData(data, mesh);
+    }
   } else if (tag.getName() == TAG_READ) {
     const std::string &dataName = tag.getStringAttributeValue(ATTR_NAME);
     std::string        meshName = tag.getStringAttributeValue(ATTR_MESH);
-    mesh::PtrMesh      mesh     = _meshConfig->getMesh(meshName);
-    PRECICE_CHECK(mesh,
-                  R"(Participant "{}" attempts to write data "{}" to an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
-                  _participants.back()->getName(), dataName, meshName, meshName);
-    mesh::PtrData data = getData(mesh, dataName);
-    _participants.back()->addReadData(data, mesh);
+    if (meshName.empty()) { // no mesh implies it's global data
+      mesh::PtrData data = getGlobalData(dataName);
+      _participants.back()->addReadGlobalData(data);
+    } else {
+      mesh::PtrMesh mesh = _meshConfig->getMesh(meshName);
+      PRECICE_CHECK(mesh,
+                    R"(Participant "{}" attempts to write data "{}" to an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
+                    _participants.back()->getName(), dataName, meshName, meshName);
+      mesh::PtrData data = getData(mesh, dataName);
+      _participants.back()->addReadData(data, mesh);
+    }
   } else if (tag.getName() == TAG_WATCH_POINT) {
     PRECICE_ASSERT(_dimensions != 0); // setDimensions() has been called
     WatchPointConfig config;
@@ -392,11 +404,28 @@ const mesh::PtrData &ParticipantConfiguration::getData(
     const mesh::PtrMesh &mesh,
     const std::string &  nameData) const
 {
+  // if getData is called for global data, then the config file must incorrectly have a mesh name with the global data.
+  PRECICE_CHECK(!(_meshConfig->getDataConfiguration()->hasGlobalDataName(nameData)),
+                "Participant \"{}\" specifies mesh name \"{}\" for global data \"{}\", but global data are not associated with meshes. "
+                "Please remove mesh=\"{}\" from the corresponding read-data or write-data tag.",
+                _participants.back()->getName(), mesh->getName(), nameData, mesh->getName());
+
   PRECICE_CHECK(mesh->hasDataName(nameData),
                 "Participant \"{}\" asks for data \"{}\" from mesh \"{}\", but this mesh does not use such data. "
                 "Please add a use-data tag with name=\"{}\" to this mesh.",
                 _participants.back()->getName(), nameData, mesh->getName(), nameData);
   return mesh->data(nameData);
+}
+
+const mesh::PtrData &ParticipantConfiguration::getGlobalData(
+    const std::string &nameData) const
+{
+  mesh::PtrDataConfiguration dataConfig = _meshConfig->getDataConfiguration();
+  PRECICE_CHECK(dataConfig->hasGlobalDataName(nameData),
+                "Participant \"{}\" asks for global data \"{}\", but such data is not found. "
+                "Please add a global-data tag with name=\"{}\".",
+                _participants.back()->getName(), nameData, nameData);
+  return dataConfig->globalData(nameData);
 }
 
 void ParticipantConfiguration::finishParticipantConfiguration(

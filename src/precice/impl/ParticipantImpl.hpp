@@ -250,6 +250,17 @@ public:
       ::precice::span<const VertexID> vertices,
       ::precice::span<const double>   gradients);
 
+  /// @copydoc Participant::writeGlobalData
+  void writeGlobalData(
+      std::string_view              dataName,
+      ::precice::span<const double> value);
+
+  /// @copydoc Participant::readGlobalData
+  void readGlobalData(
+      std::string_view        dataName,
+      double                  relativeReadTime,
+      ::precice::span<double> value) const;
+
   ///@}
 
   /** @name Experimental Data Access

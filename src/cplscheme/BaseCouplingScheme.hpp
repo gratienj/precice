@@ -235,8 +235,10 @@ public:
   bool hasConverged() const override;
 
 protected:
-  /// All send and receive data as a map "data ID -> data"
-  DataMap _allData;
+  /// All send and receive mesh-associated data as a map "data ID -> data"
+  DataMap _allMeshData;
+  /// All send and receive global data as a map "data ID -> data"
+  DataMap _allGlobalData;
 
   /// Acceleration method to speedup iteration convergence.
   acceleration::PtrAcceleration _acceleration;
@@ -273,17 +275,18 @@ protected:
   void initializeWithZeroInitialData(const DataMap &receiveData);
 
   /**
-   * @brief Adds CouplingData with given properties to this BaseCouplingScheme and returns a pointer to the CouplingData
+   * @brief Adds CouplingData with given properties to _allMeshData and _allGlobalData of this BaseCouplingScheme and returns a pointer to the CouplingData
    *
    * If CouplingData with ID of provided data already exists in coupling scheme, no duplicate is created but a pointer to the already existing CouplingData is returned.
    *
    * @param data data the CouplingData is associated with
-   * @param mesh mesh the CouplingData is associated with
+   * @param mesh mesh the CouplingData is associated with (nullptr if data is global)
    * @param requiresInitialization true, if CouplingData requires initialization
    * @param exchangeSubsteps true, if CouplingData exchanges all substeps in send/recv
+   * @param isGlobal true, if the data associated with this CouplingData is global
    * @return PtrCouplingData pointer to CouplingData owned by the CouplingScheme
    */
-  PtrCouplingData addCouplingData(const mesh::PtrData &data, mesh::PtrMesh mesh, bool requiresInitialization, bool exchangeSubsteps);
+  PtrCouplingData addCouplingData(const mesh::PtrData &data, mesh::PtrMesh mesh, bool requiresInitialization, bool exchangeSubsteps, bool isGlobal);
 
   /**
    * @brief Function to determine whether coupling scheme is an explicit coupling scheme
@@ -483,7 +486,7 @@ private:
   };
 
   /**
-   * @brief All convergence measures of coupling iterations.
+   * @brief Mesh-associated data convergence measures of coupling iterations.
    *
    * Before initialization, only dataID and measure variables are filled. Then,
    * the data is fetched from send and receive data assigned to the cpl scheme.

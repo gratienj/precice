@@ -155,7 +155,15 @@ private:
       bool          requiresInitialization;
       bool          exchangeSubsteps;
     };
+    struct GlobalExchange {
+      mesh::PtrData data;
+      std::string   from;
+      std::string   to;
+      bool          requiresInitialization;
+      bool          exchangeSubsteps;
+    };
     std::vector<Exchange>                    exchanges;
+    std::vector<GlobalExchange>              globalExchanges;
     std::vector<ConvergenceMeasureDefintion> convergenceMeasureDefinitions;
     int                                      maxIterations      = -1;
     int                                      extrapolationOrder = 0;
@@ -164,6 +172,13 @@ private:
     {
       return std::any_of(exchanges.begin(), exchanges.end(), [&totest](const auto &ex) {
         return ex.from == totest.from && ex.to == totest.to && ex.data->getName() == totest.data->getName() && ex.mesh->getName() == totest.mesh->getName();
+      });
+    }
+
+    bool hasGlobalExchange(const GlobalExchange &totest) const
+    {
+      return std::any_of(globalExchanges.begin(), globalExchanges.end(), [&totest](const auto &gex) {
+        return gex.from == totest.from && gex.to == totest.to && gex.data->getName() == totest.data->getName();
       });
     }
   } _config;
@@ -240,6 +255,9 @@ private:
       const std::string &dataName,
       const std::string &meshName) const;
 
+  mesh::PtrData getGlobalData(
+      const std::string &dataName) const;
+
   mesh::PtrData findDataByID(
       int ID) const;
 
@@ -261,7 +279,7 @@ private:
   constants::TimesteppingMethod getTimesteppingMethod(
       const std::string &method) const;
 
-  /// Adds configured exchange data to be sent or received to scheme.
+  /// Adds configured exchange data (mesh-associated as well as global) to be sent or received to scheme.
   void addDataToBeExchanged(
       BiCouplingScheme & scheme,
       const std::string &accessor) const;
@@ -309,6 +327,19 @@ private:
    * @param exchange The Exchange being checked.
    */
   void checkSubstepExchangeWaveformDegree(const Config::Exchange &exchange) const;
+
+  /**
+   * @brief Helper function to check that waveform-degree and substep exchange are compatible.
+   *
+   * The following rules are checked:
+   *
+   * 1) If waveform-degree="0", then user must set substeps="false", because constant interpolation (zeroth degree) is intended for debugging and user should use first degree instead.
+   * 2) If waveform-degree="1", then any configuration for substeps is allowed. The user might want to set substeps="false" for better performance.
+   * 3) If waveform-degree="2" or greater, the user must set substeps="true", because subcycling and exchange of substeps is required for higher-degree B-splines.
+   *
+   * @param exchange The GlobalExchange being checked.
+   */
+  void checkSubstepExchangeWaveformDegree(const Config::GlobalExchange &exchange) const;
 };
 } // namespace cplscheme
 } // namespace precice

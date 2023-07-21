@@ -13,18 +13,23 @@ CouplingData::CouplingData(
     mesh::PtrMesh mesh,
     bool          requiresInitialization,
     bool          exchangeSubsteps,
-    int           extrapolationOrder)
+    int           extrapolationOrder,
+    bool          isGlobal)
     : requiresInitialization(requiresInitialization),
       _mesh(std::move(mesh)),
       _data(std::move(data)),
       _previousIteration(_data->getDimensions(), Eigen::VectorXd::Zero(getSize())),
-      _exchangeSubsteps(exchangeSubsteps)
+      _exchangeSubsteps(exchangeSubsteps),
+      _isGlobal(isGlobal)
+
 {
   PRECICE_ASSERT(_data != nullptr);
   _data->timeStepsStorage().setExtrapolationOrder(extrapolationOrder);
 
-  PRECICE_ASSERT(_mesh != nullptr);
-  PRECICE_ASSERT(_mesh.use_count() > 0);
+  if (!isGlobal) {
+    PRECICE_ASSERT(_mesh != nullptr);
+    PRECICE_ASSERT(_mesh.use_count() > 0);
+  }
 }
 
 int CouplingData::getDimensions() const
@@ -119,6 +124,11 @@ int CouplingData::getMeshID()
 int CouplingData::getDataID()
 {
   return _data->getID();
+}
+
+bool CouplingData::isGlobal()
+{
+  return _isGlobal;
 }
 
 std::string CouplingData::getDataName()

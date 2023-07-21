@@ -26,6 +26,7 @@
 #include "m2n/config/M2NConfiguration.hpp"
 #include "mesh/Data.hpp"
 #include "mesh/Mesh.hpp"
+#include "mesh/config/DataConfiguration.hpp"
 #include "mesh/config/MeshConfiguration.hpp"
 #include "precice/config/ParticipantConfiguration.hpp"
 #include "precice/impl/SharedPointer.hpp"
@@ -253,6 +254,7 @@ void CouplingSchemeConfiguration::xmlTagCallback(
     bool               strict        = tag.getBooleanAttributeValue(ATTR_STRICT);
     PRECICE_ASSERT(_config.type == VALUE_SERIAL_IMPLICIT || _config.type == VALUE_PARALLEL_IMPLICIT || _config.type == VALUE_MULTI);
     addMinIterationConvergenceMeasure(dataName, meshName, minIterations, suffices, strict);
+
   } else if (tag.getName() == TAG_EXCHANGE) {
     std::string nameData            = tag.getStringAttributeValue(ATTR_DATA);
     std::string nameMesh            = tag.getStringAttributeValue(ATTR_MESH);
@@ -261,25 +263,42 @@ void CouplingSchemeConfiguration::xmlTagCallback(
     bool        initialize          = tag.getBooleanAttributeValue(ATTR_INITIALIZE);
     bool        exchangeSubsteps    = tag.getBooleanAttributeValue(ATTR_EXCHANGE_SUBSTEPS);
 
-    PRECICE_CHECK(_meshConfig->hasMeshName(nameMesh) && _meshConfig->getMesh(nameMesh)->hasDataName(nameData),
-                  "Mesh \"{}\" with data \"{}\" not defined. "
-                  "Please check the <exchange data=\"{}\" mesh=\"{}\" from=\"{}\" to=\"{}\" /> "
-                  "tag in the <coupling-scheme:... /> of your precice-config.xml.",
-                  nameMesh, nameData, nameData, nameMesh, nameParticipantFrom, nameParticipantTo);
+    if (nameMesh.empty()) { // no mesh implies it's global data
+      PRECICE_CHECK(_meshConfig->getDataConfiguration()->hasGlobalDataName(nameData),
+                    "Data \"{}\" not defined. "
+                    "Please check the <exchange data=\"{}\" from=\"{}\" to=\"{}\" /> "
+                    "tag in the <coupling-scheme:... /> of your precice-config.xml.",
+                    nameData, nameData, nameParticipantFrom, nameParticipantTo);
+      mesh::PtrData exchangeData = _meshConfig->getDataConfiguration()->globalData(nameData);
+      PRECICE_ASSERT(exchangeData);
+      Config::GlobalExchange newGlobalExchange{exchangeData, nameParticipantFrom, nameParticipantTo, initialize, exchangeSubsteps};
+      PRECICE_CHECK(!_config.hasGlobalExchange(newGlobalExchange),
+                    R"(Data "{}" cannot be exchanged multiple times between participants "{}" and "{}". Please remove one of the exchange tags.)",
+                    nameData, nameParticipantFrom, nameParticipantTo);
+      _config.globalExchanges.emplace_back(std::move(newGlobalExchange));
 
-    mesh::PtrMesh exchangeMesh = _meshConfig->getMesh(nameMesh);
-    PRECICE_ASSERT(exchangeMesh);
-    mesh::PtrData exchangeData = exchangeMesh->data(nameData);
-    PRECICE_ASSERT(exchangeData);
+    } else {
+      PRECICE_CHECK(_meshConfig->hasMeshName(nameMesh) && _meshConfig->getMesh(nameMesh)->hasDataName(nameData),
+                    "Mesh \"{}\" with data \"{}\" not defined. "
+                    "Please check the <exchange data=\"{}\" mesh=\"{}\" from=\"{}\" to=\"{}\" /> "
+                    "tag in the <coupling-scheme:... /> of your precice-config.xml.",
+                    nameMesh, nameData, nameData, nameMesh, nameParticipantFrom, nameParticipantTo);
 
-    Config::Exchange newExchange{exchangeData, exchangeMesh, nameParticipantFrom, nameParticipantTo, initialize, exchangeSubsteps};
-    PRECICE_CHECK(!_config.hasExchange(newExchange),
-                  R"(Data "{}" of mesh "{}" cannot be exchanged multiple times between participants "{}" and "{}". Please remove one of the exchange tags.)",
-                  nameData, nameMesh, nameParticipantFrom, nameParticipantTo);
+      mesh::PtrMesh exchangeMesh = _meshConfig->getMesh(nameMesh);
+      PRECICE_ASSERT(exchangeMesh);
+      mesh::PtrData exchangeData = exchangeMesh->data(nameData);
+      PRECICE_ASSERT(exchangeData);
 
-    _meshConfig->addNeededMesh(nameParticipantFrom, nameMesh);
-    _meshConfig->addNeededMesh(nameParticipantTo, nameMesh);
-    _config.exchanges.emplace_back(std::move(newExchange));
+      Config::Exchange newExchange{exchangeData, exchangeMesh, nameParticipantFrom, nameParticipantTo, initialize, exchangeSubsteps};
+      PRECICE_CHECK(!_config.hasExchange(newExchange),
+                    R"(Data "{}" of mesh "{}" cannot be exchanged multiple times between participants "{}" and "{}". Please remove one of the exchange tags.)",
+                    nameData, nameMesh, nameParticipantFrom, nameParticipantTo);
+
+      _meshConfig->addNeededMesh(nameParticipantFrom, nameMesh);
+      _meshConfig->addNeededMesh(nameParticipantTo, nameMesh);
+      _config.exchanges.emplace_back(std::move(newExchange));
+    }
+
   } else if (tag.getName() == TAG_MAX_ITERATIONS) {
     PRECICE_ASSERT(_config.type == VALUE_SERIAL_IMPLICIT || _config.type == VALUE_PARALLEL_IMPLICIT || _config.type == VALUE_MULTI);
     _config.maxIterations = tag.getIntAttributeValue(ATTR_VALUE);
@@ -518,7 +537,7 @@ void CouplingSchemeConfiguration::addTagExchange(
 
   auto attrData = XMLAttribute<std::string>(ATTR_DATA).setDocumentation("The data to exchange.");
   tagExchange.addAttribute(attrData);
-  auto attrMesh = XMLAttribute<std::string>(ATTR_MESH).setDocumentation("The mesh which uses the data.");
+  auto attrMesh = XMLAttribute<std::string>(ATTR_MESH, "").setDocumentation("The mesh which uses the data.");
   tagExchange.addAttribute(attrMesh);
   auto participantFrom = XMLAttribute<std::string>(ATTR_FROM).setDocumentation("The participant sending the data.");
   tagExchange.addAttribute(participantFrom);
@@ -758,6 +777,16 @@ mesh::PtrData CouplingSchemeConfiguration::getData(
   return mesh->data(dataName);
 }
 
+mesh::PtrData CouplingSchemeConfiguration::getGlobalData(
+    const std::string &dataName) const
+{
+  PRECICE_CHECK(_meshConfig->getDataConfiguration()->hasGlobalDataName(dataName),
+                "Global Data \"{}\" not defined.",
+                dataName);
+  const mesh::PtrDataConfiguration dataConfig = _meshConfig->getDataConfiguration();
+  return dataConfig->globalData(dataName);
+}
+
 mesh::PtrData CouplingSchemeConfiguration::findDataByID(
     int ID) const
 {
@@ -766,6 +795,7 @@ mesh::PtrData CouplingSchemeConfiguration::findDataByID(
       return mesh->data(ID);
     }
   }
+  // TODO: this only searches for mesh-associated data. Should also search for global data (in the dataConfig).
   return nullptr;
 }
 
@@ -966,6 +996,24 @@ void CouplingSchemeConfiguration::checkSubstepExchangeWaveformDegree(const Confi
   }
 }
 
+void CouplingSchemeConfiguration::checkSubstepExchangeWaveformDegree(const Config::GlobalExchange &exchange) const
+{
+  const auto &participant = _participantConfig->getParticipant(exchange.to);
+
+  const auto &readGlobalDataContext = participant->readGlobalDataContext(exchange.data->getName());
+  if (readGlobalDataContext.getWaveformDegree() == 0) {
+    PRECICE_CHECK(!exchange.exchangeSubsteps,
+                  "You configured <global-data:scalar/vector name=\"{}\" waveform-order=\"{}\" />. Please deactivate exchange of substeps by setting substeps=\"false\" in the following exchange tag of your coupling scheme: <exchange data=\"{}\" from=\"{}\" to=\"{}\" />. Reason: For constant interpolation no exchange of data for substeps is needed. Please consider using waveform-order=\"1\" or higher, if you want to use subcycling.",
+                  readGlobalDataContext.getDataName(), readGlobalDataContext.getWaveformDegree(), exchange.data->getName(), exchange.from, exchange.to);
+  } else if (readGlobalDataContext.getWaveformDegree() >= 2) {
+    PRECICE_CHECK(exchange.exchangeSubsteps,
+                  "You configured <global-data:scalar/vector name=\"{}\" waveform-degree=\"{}\" />. Please activate exchange of substeps by setting substeps=\"true\" in the following exchange tag of your coupling scheme: <exchange data=\"{}\" from=\"{}\" to=\"{}\" />. Reason: For higher-order interpolation exchange of data for substeps is required. If you don't want to activate exchange of additional data, please consider using waveform-degree=\"1\". Note that deactivating exchange of substep data might lead to worse results, if you use subcycling.",
+                  readGlobalDataContext.getDataName(), readGlobalDataContext.getWaveformDegree(), exchange.data->getName(), exchange.from, exchange.to);
+  } else { // For first order there is no restriction for exchange of substeps
+    PRECICE_ASSERT(readGlobalDataContext.getWaveformDegree() == 1);
+  }
+}
+
 void CouplingSchemeConfiguration::addDataToBeExchanged(
     BiCouplingScheme & scheme,
     const std::string &accessor) const
@@ -1003,14 +1051,50 @@ void CouplingSchemeConfiguration::addDataToBeExchanged(
     const bool exchangeSubsteps = exchange.exchangeSubsteps;
 
     if (from == accessor) {
-      scheme.addDataToSend(exchange.data, exchange.mesh, requiresInitialization, exchangeSubsteps);
+      scheme.addDataToSend(exchange.data, exchange.mesh, requiresInitialization, exchangeSubsteps, false);
     } else if (to == accessor) {
       checkSubstepExchangeWaveformDegree(exchange);
-      scheme.addDataToReceive(exchange.data, exchange.mesh, requiresInitialization, exchangeSubsteps);
+      scheme.addDataToReceive(exchange.data, exchange.mesh, requiresInitialization, exchangeSubsteps, false);
     } else {
       PRECICE_ASSERT(_config.type == VALUE_MULTI);
     }
   }
+
+  // Add global data to be exchanged
+  for (const Config::GlobalExchange &exchange : _config.globalExchanges) {
+    const std::string &from     = exchange.from;
+    const std::string &to       = exchange.to;
+    const std::string &dataName = exchange.data->getName();
+
+    PRECICE_CHECK(to != from,
+                  "You cannot define an exchange from and to the same participant. "
+                  "Please check the <exchange data=\"{}\" from=\"{}\" to=\"{}\" /> tag in the <coupling-scheme:... /> of your precice-config.xml.",
+                  dataName, from, to);
+
+    PRECICE_CHECK((utils::contained(from, _config.participants) || from == _config.controller),
+                  "Participant \"{}\" is not configured for coupling scheme. "
+                  "Please check the <exchange data=\"{}\" from=\"{}\" to=\"{}\" /> tag in the <coupling-scheme:... /> of your precice-config.xml.",
+                  from, dataName, from, to);
+
+    PRECICE_CHECK((utils::contained(to, _config.participants) || to == _config.controller),
+                  "Participant \"{}\" is not configured for coupling scheme. "
+                  "Please check the <exchange data=\"{}\" from=\"{}\" to=\"{}\" /> tag in the <coupling-scheme:... /> of your precice-config.xml.",
+                  to, dataName, from, to);
+
+    const bool requiresInitialization = exchange.requiresInitialization;
+
+    const bool exchangeSubsteps = exchange.exchangeSubsteps;
+
+    if (from == accessor) {
+      scheme.addDataToSend(exchange.data, nullptr, requiresInitialization, exchangeSubsteps, true);
+    } else if (to == accessor) {
+      checkSubstepExchangeWaveformDegree(exchange);
+      scheme.addDataToReceive(exchange.data, nullptr, requiresInitialization, exchangeSubsteps, true);
+    } else {
+      PRECICE_ASSERT(_config.type == VALUE_MULTI);
+    }
+  }
+
   scheme.determineInitialDataExchange();
 }
 
@@ -1047,15 +1131,26 @@ void CouplingSchemeConfiguration::addMultiDataToBeExchanged(
     }
   }
   scheme.determineInitialDataExchange();
+
+  //TODO: Add global data to be exchanged, see https://github.com/precice/precice/issues/1716
 }
 
 void CouplingSchemeConfiguration::checkIfDataIsExchanged(
     DataID dataID) const
 {
+  // check in mesh-associated exchanges
   const auto match = std::find_if(_config.exchanges.begin(),
                                   _config.exchanges.end(),
                                   [dataID](const Config::Exchange &exchange) { return exchange.data->getID() == dataID; });
   if (match != _config.exchanges.end()) {
+    return;
+  }
+
+  // check in global exchanges
+  const auto matchGlobal = std::find_if(_config.globalExchanges.begin(),
+                                        _config.globalExchanges.end(),
+                                        [dataID](const Config::GlobalExchange &gExchange) { return gExchange.data->getID() == dataID; });
+  if (matchGlobal != _config.globalExchanges.end()) {
     return;
   }
 
@@ -1110,8 +1205,9 @@ void CouplingSchemeConfiguration::addConvergenceMeasures(
     const std::vector<ConvergenceMeasureDefintion> &convergenceMeasureDefinitions) const
 {
   for (auto &elem : convergenceMeasureDefinitions) {
-    _meshConfig->addNeededMesh(participant, elem.meshName);
     checkIfDataIsExchanged(elem.data->getID());
+    PRECICE_ASSERT(not elem.meshName.empty()); // ensure that convergence measure was not configured for global data
+    _meshConfig->addNeededMesh(participant, elem.meshName);
     scheme->addConvergenceMeasure(elem.data->getID(), elem.suffices, elem.strict, elem.measure, elem.doesLogging);
   }
 }

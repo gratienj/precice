@@ -46,14 +46,16 @@ public:
       const mesh::PtrData &data,
       mesh::PtrMesh        mesh,
       bool                 requiresInitialization,
-      bool                 exchangeSubsteps);
+      bool                 exchangeSubsteps,
+      bool                 isGlobal = false);
 
   /// Adds data to be received on data exchange.
   void addDataToReceive(
       const mesh::PtrData &data,
       mesh::PtrMesh        mesh,
       bool                 requiresInitialization,
-      bool                 exchangeSubsteps);
+      bool                 exchangeSubsteps,
+      bool                 isGlobal = false);
 
   void determineInitialDataExchange() override;
 
@@ -70,6 +72,11 @@ public:
    */
   bool hasSendData(DataID dataID);
 
+  /**
+   * @returns true, if coupling scheme has sendGlobalData with given DataID
+   */
+  bool hasSendGlobalData(DataID dataID);
+
 protected:
   /// Returns all data to be sent.
   DataMap &getSendData();
@@ -77,11 +84,23 @@ protected:
   /// Returns all data to be received.
   DataMap &getReceiveData();
 
+  /// Returns all global data to be sent.
+  DataMap &getSendGlobalData();
+
+  /// Returns all global data to be received.
+  DataMap &getReceiveGlobalData();
+
   /// Sets the values
   CouplingData *getSendData(DataID dataID);
 
   /// Returns all data to be received with data ID as given.
   CouplingData *getReceiveData(DataID dataID);
+
+  /// Sets the values
+  CouplingData *getSendGlobalData(DataID dataID);
+
+  /// Returns all global data to be received with data ID as given.
+  CouplingData *getReceiveGlobalData(DataID dataID);
 
   /// @return Communication device to the other coupling participant.
   m2n::PtrM2N getM2N() const;
@@ -100,6 +119,12 @@ private:
 
   /// All receive data as a map "data ID -> data"
   DataMap _receiveData;
+
+  /// All send global data as a map "data ID -> data"
+  DataMap _sendGlobalData;
+
+  /// All receive global data as a map "data ID -> data"
+  DataMap _receiveGlobalData;
 
   /// First participant name.
   std::string _firstParticipant = "unknown";

@@ -255,6 +255,8 @@ target_sources(preciceCore
     src/precice/impl/ParticipantState.hpp
     src/precice/impl/ReadDataContext.cpp
     src/precice/impl/ReadDataContext.hpp
+    src/precice/impl/ReadGlobalDataContext.cpp
+    src/precice/impl/ReadGlobalDataContext.hpp
     src/precice/impl/SharedPointer.hpp
     src/precice/impl/ValidationMacros.hpp
     src/precice/impl/WatchIntegral.cpp
@@ -263,6 +265,8 @@ target_sources(preciceCore
     src/precice/impl/WatchPoint.hpp
     src/precice/impl/WriteDataContext.cpp
     src/precice/impl/WriteDataContext.hpp
+    src/precice/impl/WriteGlobalDataContext.cpp
+    src/precice/impl/WriteGlobalDataContext.hpp
     src/precice/precice.hpp
     src/precice/span.hpp
     src/precice/types.hpp

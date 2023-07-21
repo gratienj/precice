@@ -47,6 +47,7 @@ void MultiCouplingScheme::determineInitialDataExchange()
   for (auto &receiveExchange : _receiveDataVector | boost::adaptors::map_values) {
     determineInitialReceive(receiveExchange);
   }
+  // TODO add global data here, see https://github.com/precice/precice/issues/1716
 }
 
 std::vector<std::string> MultiCouplingScheme::getCouplingPartners() const
@@ -68,7 +69,7 @@ bool MultiCouplingScheme::hasAnySendData()
 const DataMap &MultiCouplingScheme::getAccelerationData()
 {
   // MultiCouplingScheme applies acceleration to all CouplingData
-  return _allData;
+  return _allMeshData;
 }
 
 void MultiCouplingScheme::initializeReceiveDataStorage()
@@ -77,6 +78,7 @@ void MultiCouplingScheme::initializeReceiveDataStorage()
   for (auto &receiveExchange : _receiveDataVector) {
     initializeWithZeroInitialData(receiveExchange.second);
   }
+  // TODO add global data here, see https://github.com/precice/precice/issues/1716
 }
 
 void MultiCouplingScheme::exchangeInitialData()
@@ -180,7 +182,7 @@ void MultiCouplingScheme::addDataToSend(
     bool                 exchangeSubsteps,
     const std::string &  to)
 {
-  PtrCouplingData ptrCplData = addCouplingData(data, std::move(mesh), requiresInitialization, exchangeSubsteps);
+  PtrCouplingData ptrCplData = addCouplingData(data, std::move(mesh), requiresInitialization, exchangeSubsteps, false);
   PRECICE_DEBUG("Configuring send data to {}", to);
   _sendDataVector[to].emplace(data->getID(), ptrCplData);
 }
@@ -192,7 +194,7 @@ void MultiCouplingScheme::addDataToReceive(
     bool                 exchangeSubsteps,
     const std::string &  from)
 {
-  PtrCouplingData ptrCplData = addCouplingData(data, std::move(mesh), requiresInitialization, exchangeSubsteps);
+  PtrCouplingData ptrCplData = addCouplingData(data, std::move(mesh), requiresInitialization, exchangeSubsteps, false);
   PRECICE_DEBUG("Configuring receive data from {}", from);
   _receiveDataVector[from].emplace(data->getID(), ptrCplData);
 }

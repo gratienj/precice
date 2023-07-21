@@ -115,8 +115,14 @@ void BaseCouplingScheme::sendData(const m2n::PtrM2N &m2n, const DataMap &sendDat
   PRECICE_TRACE();
   PRECICE_ASSERT(m2n.get() != nullptr);
   PRECICE_ASSERT(m2n->isConnected());
-
+  int meshID{-1};
   for (const auto &data : sendData | boost::adaptors::map_values) {
+    if (not data->isGlobal()) {
+      meshID = data->getMeshID();
+    } else {
+      meshID = mesh::Mesh::GLOBAL_DATA_MESH_ID;
+    }
+
     const auto &stamples = data->stamples();
     PRECICE_ASSERT(stamples.size() > 0);
 
@@ -142,20 +148,20 @@ void BaseCouplingScheme::sendData(const m2n::PtrM2N &m2n, const DataMap &sendDat
       const auto serialized = com::serialize::SerializedStamples::serialize(data);
 
       // Data is actually only send if size>0, which is checked in the derived classes implementation
-      m2n->send(serialized.values(), data->getMeshID(), data->getDimensions() * serialized.nTimeSteps());
+      m2n->send(serialized.values(), meshID, data->getDimensions() * serialized.nTimeSteps());
 
       if (data->hasGradient()) {
-        m2n->send(serialized.gradients(), data->getMeshID(), data->getDimensions() * data->meshDimensions() * serialized.nTimeSteps());
+        m2n->send(serialized.gradients(), meshID, data->getDimensions() * data->meshDimensions() * serialized.nTimeSteps());
       }
     } else {
       data->sample() = stamples.back().sample;
 
       // Data is only received on ranks with size>0, which is checked in the derived class implementation
-      m2n->send(data->values(), data->getMeshID(), data->getDimensions());
+      m2n->send(data->values(), meshID, data->getDimensions());
 
       if (data->hasGradient()) {
         PRECICE_ASSERT(data->hasGradient());
-        m2n->send(data->gradients(), data->getMeshID(), data->getDimensions() * data->meshDimensions());
+        m2n->send(data->gradients(), meshID, data->getDimensions() * data->meshDimensions());
       }
     }
   }
@@ -185,7 +191,14 @@ void BaseCouplingScheme::receiveData(const m2n::PtrM2N &m2n, const DataMap &rece
   PRECICE_TRACE();
   PRECICE_ASSERT(m2n.get());
   PRECICE_ASSERT(m2n->isConnected());
+  int meshID{-1};
+
   for (const auto &data : receiveData | boost::adaptors::map_values) {
+    if (not data->isGlobal()) {
+      meshID = data->getMeshID();
+    } else {
+      meshID = mesh::Mesh::GLOBAL_DATA_MESH_ID;
+    }
 
     if (data->exchangeSubsteps()) {
       const int nTimeSteps = receiveNumberOfTimeSteps(m2n);
@@ -197,20 +210,20 @@ void BaseCouplingScheme::receiveData(const m2n::PtrM2N &m2n, const DataMap &rece
       auto serialized = com::serialize::SerializedStamples::empty(timesAscending, data);
 
       // Data is only received on ranks with size>0, which is checked in the derived class implementation
-      m2n->receive(serialized.values(), data->getMeshID(), data->getDimensions() * nTimeSteps);
+      m2n->receive(serialized.values(), meshID, data->getDimensions() * nTimeSteps);
 
       if (data->hasGradient()) {
-        m2n->receive(serialized.gradients(), data->getMeshID(), data->getDimensions() * data->meshDimensions() * nTimeSteps);
+        m2n->receive(serialized.gradients(), meshID, data->getDimensions() * data->meshDimensions() * nTimeSteps);
       }
 
       serialized.deserializeInto(timesAscending, data);
     } else {
       // Data is only received on ranks with size>0, which is checked in the derived class implementation
-      m2n->receive(data->values(), data->getMeshID(), data->getDimensions());
+      m2n->receive(data->values(), meshID, data->getDimensions());
 
       if (data->hasGradient()) {
         PRECICE_ASSERT(data->hasGradient());
-        m2n->receive(data->gradients(), data->getMeshID(), data->getDimensions() * data->meshDimensions());
+        m2n->receive(data->gradients(), meshID, data->getDimensions() * data->meshDimensions());
       }
       data->setSampleAtTime(time::Storage::WINDOW_END, data->sample());
     }
@@ -227,16 +240,26 @@ void BaseCouplingScheme::initializeWithZeroInitialData(const DataMap &receiveDat
   }
 }
 
-PtrCouplingData BaseCouplingScheme::addCouplingData(const mesh::PtrData &data, mesh::PtrMesh mesh, bool requiresInitialization, bool communicateSubsteps)
+PtrCouplingData BaseCouplingScheme::addCouplingData(const mesh::PtrData &data, mesh::PtrMesh mesh, bool requiresInitialization, bool communicateSubsteps, bool isGlobal)
 {
-  int             id = data->getID();
-  PtrCouplingData ptrCplData;
-  if (!utils::contained(id, _allData)) { // data is not used by this coupling scheme yet, create new CouplingData
-    ptrCplData = std::make_shared<CouplingData>(data, std::move(mesh), requiresInitialization, communicateSubsteps, _extrapolationOrder);
-    _allData.emplace(id, ptrCplData);
-  } else { // data is already used by another exchange of this coupling scheme, use existing CouplingData
-    ptrCplData = _allData[id];
+  int             id         = data->getID();
+  PtrCouplingData ptrCplData = std::make_shared<CouplingData>(data, std::move(mesh), requiresInitialization, communicateSubsteps, _extrapolationOrder, isGlobal);
+
+  // TODO: store mesh and global data together in a `DataMap _allData ` (currently produces a bug), see https://github.com/precice/precice/issues/1716
+  if (isGlobal) {
+    if (!utils::contained(id, _allGlobalData)) { // data is not used by this coupling scheme yet, create new CouplingData
+      _allGlobalData.emplace(id, ptrCplData);
+    } else { // data is already used by another exchange of this coupling scheme, use existing CouplingData
+      ptrCplData = _allGlobalData[id];
+    }
+  } else {                                     // mesh data
+    if (!utils::contained(id, _allMeshData)) { // data is not used by this coupling scheme yet, create new CouplingData
+      _allMeshData.emplace(id, ptrCplData);
+    } else { // data is already used by another exchange of this coupling scheme, use existing CouplingData
+      ptrCplData = _allMeshData[id];
+    }
   }
+
   return ptrCplData;
 }
 
@@ -383,7 +406,10 @@ void BaseCouplingScheme::secondExchange()
 void BaseCouplingScheme::moveToNextWindow()
 {
   PRECICE_TRACE(_timeWindows);
-  for (auto &data : _allData | boost::adaptors::map_values) {
+  for (auto &data : _allMeshData | boost::adaptors::map_values) {
+    data->moveToNextWindow();
+  }
+  for (auto &data : _allGlobalData | boost::adaptors::map_values) {
     data->moveToNextWindow();
   }
 }
@@ -633,8 +659,8 @@ void BaseCouplingScheme::addConvergenceMeasure(
     bool                        doesLogging)
 {
   ConvergenceMeasureContext convMeasure;
-  PRECICE_ASSERT(_allData.count(dataID) == 1, "Data with given data ID must exist!");
-  convMeasure.couplingData = _allData.at(dataID);
+  PRECICE_ASSERT(_allMeshData.count(dataID) == 1, "Data with given data ID must exist!");
+  convMeasure.couplingData = _allMeshData.at(dataID);
   convMeasure.suffices     = suffices;
   convMeasure.strict       = strict;
   convMeasure.measure      = std::move(measure);
@@ -750,7 +776,10 @@ bool BaseCouplingScheme::reachedEndOfTimeWindow()
 void BaseCouplingScheme::storeIteration()
 {
   PRECICE_ASSERT(isImplicitCouplingScheme());
-  for (const auto &data : _allData | boost::adaptors::map_values) {
+  for (const auto &data : _allMeshData | boost::adaptors::map_values) {
+    data->storeIteration();
+  }
+  for (const auto &data : _allGlobalData | boost::adaptors::map_values) {
     data->storeIteration();
   }
 }

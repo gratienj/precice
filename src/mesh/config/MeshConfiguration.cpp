@@ -31,7 +31,7 @@ MeshConfiguration::MeshConfiguration(
 {
   using namespace xml;
   std::string doc;
-  XMLTag      tag(*this, TAG, xml::XMLTag::OCCUR_ONCE_OR_MORE);
+  XMLTag      tag(*this, TAG, xml::XMLTag::OCCUR_ARBITRARY);
   doc = "Surface mesh consisting of vertices and optional connectivity information. "
         "The vertices of a mesh can carry data, "
         "configured by tags <use-data>. The mesh coordinates have to be "
@@ -75,6 +75,9 @@ void MeshConfiguration::xmlTagCallback(
     bool        found = false;
     for (const DataConfiguration::ConfiguredData &data : _dataConfig->data()) {
       if (data.name == name) {
+        PRECICE_CHECK(not data.isGlobal, "You used global data \"{0}\" in mesh \"{1}\"."
+                                         "Global data should not be associated with any mesh.",
+                      data.name, _meshes.back()->getName());
         _meshes.back()->createData(data.name, data.dimensions, _dataIDManager.getFreeID(), data.waveformDegree);
         found = true;
         break;
