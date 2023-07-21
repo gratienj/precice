@@ -53,6 +53,7 @@ AccelerationConfiguration::AccelerationConfiguration(
       ATTR_RSLS_REUSED_TIME_WINDOWS("reused-time-windows-at-restart"),
       ATTR_RSSVD_TRUNCATIONEPS("truncation-threshold"),
       ATTR_PRECOND_NONCONST_TIME_WINDOWS("freeze-after"),
+      ATTR_PRECOND_UPDATE("update"),
       VALUE_CONSTANT("constant"),
       VALUE_AITKEN("aitken"),
       VALUE_IQNILS("IQN-ILS"),
@@ -61,10 +62,14 @@ AccelerationConfiguration::AccelerationConfiguration(
       VALUE_QR1FILTER("QR1"),
       VALUE_QR1_ABSFILTER("QR1-absolute"),
       VALUE_QR2FILTER("QR2"),
+      VALUE_QR3FILTER("QR3"),
       VALUE_CONSTANT_PRECONDITIONER("constant"),
       VALUE_VALUE_PRECONDITIONER("value"),
       VALUE_RESIDUAL_PRECONDITIONER("residual"),
       VALUE_RESIDUAL_SUM_PRECONDITIONER("residual-sum"),
+      VALUE_RESIDUAL_SUM_ALWAYS("always"),
+      VALUE_RESIDUAL_SUM_THRESHOLD("on-threshold"),
+      VALUE_RESIDUAL_SUM_LIMIT("limit"),
       VALUE_LS_RESTART("RS-LS"),
       VALUE_ZERO_RESTART("RS-0"),
       VALUE_SVD_RESTART("RS-SVD"),
@@ -196,13 +201,17 @@ void AccelerationConfiguration::xmlTagCallback(
       _config.filter = Acceleration::QR1FILTER_ABS;
     } else if (f == VALUE_QR2FILTER) {
       _config.filter = Acceleration::QR2FILTER;
+    } else if (f == VALUE_QR3FILTER) {
+      _config.filter = Acceleration::QR3FILTER;
     } else {
       PRECICE_ASSERT(false);
     }
     _config.singularityLimit = callingTag.getDoubleAttributeValue(ATTR_SINGULARITYLIMIT);
   } else if (callingTag.getName() == TAG_PRECONDITIONER) {
     _config.preconditionerType         = callingTag.getStringAttributeValue(ATTR_TYPE);
+    _config.preconditionerUpdate       = callingTag.getBooleanAttributeValue(ATTR_PRECOND_UPDATE);
     _config.precond_nbNonConstTWindows = callingTag.getIntAttributeValue(ATTR_PRECOND_NONCONST_TIME_WINDOWS);
+    _config.preconLimitUpdate          = callingTag.getDoubleAttributeValue(VALUE_RESIDUAL_SUM_LIMIT);
   } else if (callingTag.getName() == TAG_IMVJRESTART) {
 
     if (_config.alwaysBuildJacobian)
@@ -257,10 +266,20 @@ void AccelerationConfiguration::xmlEndTagCallback(
         _preconditioner = PtrPreconditioner(new ConstantPreconditioner(factors));
       } else if (_config.preconditionerType == VALUE_VALUE_PRECONDITIONER) {
         _preconditioner = PtrPreconditioner(new ValuePreconditioner(_config.precond_nbNonConstTWindows));
+        //if ( _config.preconditionerUpdate){ PRECICE_WARN("Preconditioner update is disabled. This is not supported for the value preconditioner.");}
       } else if (_config.preconditionerType == VALUE_RESIDUAL_PRECONDITIONER) {
         _preconditioner = PtrPreconditioner(new ResidualPreconditioner(_config.precond_nbNonConstTWindows));
+        //if (not _config.preconditionerUpdate){ PRECICE_WARN("Preconditioner update is disabled. This is not supported for the value preconditioner.");}
       } else if (_config.preconditionerType == VALUE_RESIDUAL_SUM_PRECONDITIONER) {
-        _preconditioner = PtrPreconditioner(new ResidualSumPreconditioner(_config.precond_nbNonConstTWindows));
+        bool updatePreconWeights = true;
+        if (_config.preconditionerUpdate == VALUE_RESIDUAL_SUM_ALWAYS) {
+          updatePreconWeights = true;
+        } else if (_config.preconditionerUpdate == VALUE_RESIDUAL_SUM_THRESHOLD) {
+          updatePreconWeights = false;
+        } else {
+          PRECICE_ERROR("Please use a valid tag. Current options are \"always\" and \"on-threshold\".");
+        }
+        _preconditioner = PtrPreconditioner(new ResidualSumPreconditioner(_config.precond_nbNonConstTWindows, updatePreconWeights, _config.preconLimitUpdate));
       } else {
         // no preconditioner defined
         std::vector<double> factors;
@@ -365,7 +384,8 @@ void AccelerationConfiguration::addCommonIQNSubtags(xml::XMLTag &tag)
   auto attrFilterName = XMLAttribute<std::string>(ATTR_TYPE)
                             .setOptions({VALUE_QR1FILTER,
                                          VALUE_QR1_ABSFILTER,
-                                         VALUE_QR2FILTER})
+                                         VALUE_QR2FILTER,
+                                         VALUE_QR3FILTER})
                             .setDocumentation("Type of the filter.");
   tagFilter.addAttribute(attrFilterName);
   tag.addSubtag(tagFilter);
@@ -439,11 +459,20 @@ void AccelerationConfiguration::addTypeSpecificSubtags(
                                                    VALUE_RESIDUAL_SUM_PRECONDITIONER})
                                       .setDocumentation("The type of the preconditioner.");
     tagPreconditioner.addAttribute(attrPreconditionerType);
+    auto attrPreconditionerUpdate = XMLAttribute<std::string>(ATTR_PRECOND_UPDATE, VALUE_RESIDUAL_SUM_ALWAYS)
+                                        .setOptions({VALUE_RESIDUAL_SUM_ALWAYS,
+                                                     VALUE_RESIDUAL_SUM_THRESHOLD})
+                                        .setDocumentation("Periodically updates the preconditioner weights after the first time windows.");
+    tagPreconditioner.addAttribute(attrPreconditionerUpdate);
     auto nonconstTWindows = makeXMLAttribute(ATTR_PRECOND_NONCONST_TIME_WINDOWS, -1)
                                 .setDocumentation(
                                     "After the given number of time windows, the preconditioner weights "
                                     "are frozen and the preconditioner acts like a constant preconditioner.");
     tagPreconditioner.addAttribute(nonconstTWindows);
+    auto precondUpdateLim = makeXMLAttribute(VALUE_RESIDUAL_SUM_LIMIT, 10.0)
+                                .setDocumentation(
+                                    "The limit for the preconditioner update. If the pre-scaling weights have a relative difference of this limit, the weights are updated.");
+    tagPreconditioner.addAttribute(precondUpdateLim);
     tag.addSubtag(tagPreconditioner);
 
   } else if (tag.getName() == VALUE_MVQN) {
@@ -511,9 +540,18 @@ void AccelerationConfiguration::addTypeSpecificSubtags(
                                                    VALUE_RESIDUAL_SUM_PRECONDITIONER})
                                       .setDocumentation("Type of the preconditioner.");
     tagPreconditioner.addAttribute(attrPreconditionerType);
+    auto attrPreconditionerUpdate = XMLAttribute<std::string>(ATTR_PRECOND_UPDATE, VALUE_RESIDUAL_SUM_ALWAYS)
+                                        .setOptions({VALUE_RESIDUAL_SUM_ALWAYS,
+                                                     VALUE_RESIDUAL_SUM_THRESHOLD})
+                                        .setDocumentation("Periodically updates the preconditioner weights after the first time windows.");
+    tagPreconditioner.addAttribute(attrPreconditionerUpdate);
     auto nonconstTWindows = makeXMLAttribute(ATTR_PRECOND_NONCONST_TIME_WINDOWS, -1)
                                 .setDocumentation("After the given number of time windows, the preconditioner weights are frozen and the preconditioner acts like a constant preconditioner.");
     tagPreconditioner.addAttribute(nonconstTWindows);
+    auto precondUpdateLim = makeXMLAttribute(VALUE_RESIDUAL_SUM_LIMIT, 10.0)
+                                .setDocumentation(
+                                    "The limit for the preconditioner update. If the pre-scaling weights have a relative difference of this limit, the weights are updated.");
+    tagPreconditioner.addAttribute(precondUpdateLim);
     tag.addSubtag(tagPreconditioner);
 
   } else if (tag.getName() == VALUE_BROYDEN) {
