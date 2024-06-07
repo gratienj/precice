@@ -453,6 +453,10 @@ private:
   /// Discards send (currently write) data of a participant after a given time when another iteration is required
   void trimSendDataAfter(double time);
 
+  int  getTotalMeshChanges() const;
+  bool reinitHandshake(bool requestReinit) const;
+  void reinitialize();
+
   /// To allow white box tests.
   friend struct Integration::Serial::Whitebox::TestConfigurationPeano;
   friend struct Integration::Serial::Whitebox::TestConfigurationComsol;

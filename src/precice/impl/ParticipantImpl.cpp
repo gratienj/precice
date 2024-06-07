@@ -242,8 +242,8 @@ void ParticipantImpl::initialize()
 {
   PRECICE_TRACE();
   PRECICE_CHECK(_state != State::Finalized, "initialize() cannot be called after finalize().");
-  PRECICE_CHECK(_state != State::Initialized, "initialize() may only be called once.");
-  PRECICE_ASSERT(not _couplingScheme->isInitialized());
+  // PRECICE_CHECK(_state != State::Initialized, "initialize() may only be called once.");
+  // PRECICE_ASSERT(not _couplingScheme->isInitialized());
 
   bool failedToInitialize = _couplingScheme->isActionRequired(cplscheme::CouplingScheme::Action::InitializeData) && not _couplingScheme->isActionFulfilled(cplscheme::CouplingScheme::Action::InitializeData);
   PRECICE_CHECK(not failedToInitialize,
@@ -367,6 +367,11 @@ void ParticipantImpl::advance(
     syncTimestep(computedTimeStepSize);
   }
 #endif
+
+  int totalMeshesChanges = getTotalMeshChanges();
+  if (reinitHandshake(totalMeshesChanges)) {
+    reinitialize();
+  }
 
   // Update the coupling scheme time state. Necessary to get correct remainder.
   const bool   isAtWindowEnd = _couplingScheme->addComputedTime(computedTimeStepSize);
@@ -1616,6 +1621,66 @@ ParticipantImpl::MappedSamples ParticipantImpl::mappedSamples() const
   res.read  = _executedReadMappings;
   res.write = _executedWriteMappings;
   return res;
+}
+
+// Reinitialization
+
+int ParticipantImpl::getTotalMeshChanges() const
+{
+  Event e("intra-handshake", profiling::Synchronize);
+  PRECICE_TRACE();
+  int localMeshesChanges = _meshLock.countUnlocked();
+  PRECICE_DEBUG("Local Mesh Changes: {}", localMeshesChanges);
+
+  int totalMeshesChanges = 0;
+  utils::IntraComm::allreduceSum(localMeshesChanges, totalMeshesChanges);
+  PRECICE_DEBUG("Total Mesh Changes: {}", totalMeshesChanges);
+  return totalMeshesChanges;
+}
+
+bool ParticipantImpl::reinitHandshake(bool requestReinit) const
+{
+  PRECICE_TRACE();
+  Event e("inter-handshake", profiling::Synchronize);
+
+  if (not utils::IntraComm::isSecondary()) {
+    PRECICE_DEBUG("Reinitialization is{} required.", (requestReinit ? "" : " not"));
+
+    PRECICE_DEBUG("Handshake Phase 1 - Broadcast requests");
+    bool swarmReinitRequired = requestReinit;
+    for (auto &iter : _m2ns) {
+      PRECICE_DEBUG("Performing handshake with {}", iter.first);
+      bool  received = false;
+      auto &comm     = *iter.second.m2n->getPrimaryRankCommunication();
+      if (iter.second.isRequesting) {
+        comm.send(requestReinit, 0);
+        comm.receive(received, 0);
+      } else {
+        comm.receive(received, 0);
+        comm.send(requestReinit, 0);
+      }
+      swarmReinitRequired |= received;
+    }
+    PRECICE_DEBUG("Result of Phase 1 -{} reinit required.", (swarmReinitRequired ? "" : " no"));
+
+    utils::IntraComm::broadcast(swarmReinitRequired);
+    return swarmReinitRequired;
+  } else {
+    bool swarmReinitRequired = false;
+    utils::IntraComm::broadcast(swarmReinitRequired);
+    return swarmReinitRequired;
+  }
+}
+
+void ParticipantImpl::reinitialize()
+{
+  PRECICE_TRACE();
+  PRECICE_INFO("Reinitializing Participant");
+  Event                        e("reinitialize");
+  profiling::ScopedEventPrefix sep("reinitialize/");
+  closeCommunicationChannels(CloseChannels::Distributed);
+  _state = State::Constructed;
+  initialize();
 }
 
 } // namespace precice::impl

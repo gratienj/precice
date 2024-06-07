@@ -204,18 +204,25 @@ void ProvidedPartition::prepare()
 
   } else {
 
+    PRECICE_WARN("B1");
     // The only rank of the participant contains all vertices
-    PRECICE_ASSERT(_mesh->getVertexDistribution().empty());
+    PRECICE_WARN("B1.1 {}", _mesh->nVertices());
+    //PRECICE_ASSERT(_mesh->getVertexDistribution().empty());
+    PRECICE_WARN("before lambda");
     _mesh->setVertexDistribution([&] {
+      PRECICE_WARN("in lambda");
       mesh::Mesh::VertexDistribution vertexDistribution;
       for (int i = 0; i < numberOfVertices; i++) {
         vertexDistribution[0].push_back(i);
         _mesh->vertex(i).setGlobalIndex(i);
       }
+      PRECICE_WARN("end lambda");
       return vertexDistribution;
     }());
+    PRECICE_WARN("B2");
     PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
     _mesh->setVertexOffsets({numberOfVertices});
+    PRECICE_WARN("B3");
     _mesh->setGlobalNumberOfVertices(numberOfVertices);
   }
 

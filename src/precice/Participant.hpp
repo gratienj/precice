@@ -525,6 +525,8 @@ public:
    */
   bool requiresMeshConnectivityFor(::precice::string_view meshName) const;
 
+  void resetMesh(::precice::string_view meshName);
+
   /**
    * @brief Creates a mesh vertex
    *
