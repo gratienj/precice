@@ -297,6 +297,25 @@ void BaseCouplingScheme::initialize()
   _isInitialized = true;
 }
 
+void BaseCouplingScheme::reinitialize()
+{
+  PRECICE_TRACE();
+  PRECICE_ASSERT(isInitialized());
+
+  if (isImplicitCouplingScheme()) {
+    //storeIteration();
+    if (not doesFirstStep()) {
+      // reserve memory and initialize data with zero
+      if (_acceleration) {
+        _acceleration->initialize(getAccelerationData());
+      }
+    }
+    initializeTXTWriters();
+  }
+
+  // exchangeInitialData();
+}
+
 bool BaseCouplingScheme::sendsInitializedData() const
 {
   return _sendsInitializedData;
