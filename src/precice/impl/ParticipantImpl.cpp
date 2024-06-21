@@ -244,6 +244,7 @@ void ParticipantImpl::initialize()
   PRECICE_CHECK(_state != State::Finalized, "initialize() cannot be called after finalize().");
   // PRECICE_CHECK(_state != State::Initialized, "initialize() may only be called once.");
   // PRECICE_ASSERT(not _couplingScheme->isInitialized());
+  const bool reinitializing = _couplingScheme->isInitialized();
 
   bool failedToInitialize = _couplingScheme->isActionRequired(cplscheme::CouplingScheme::Action::InitializeData) && not _couplingScheme->isActionFulfilled(cplscheme::CouplingScheme::Action::InitializeData);
   PRECICE_CHECK(not failedToInitialize,
@@ -311,32 +312,39 @@ void ParticipantImpl::initialize()
     watchIntegral->initialize();
   }
 
-  _meshLock.lockAll();
+  if (reinitializing) {
+    PRECICE_DEBUG("Reinitialize coupling schemes");
+    _couplingScheme->reinitialize();
+  } else {
+    _meshLock.lockAll();
 
-  for (auto &context : _accessor->writeDataContexts()) {
-    const double startTime = 0.0;
-    context.storeBufferedData(startTime);
+    for (auto &context : _accessor->writeDataContexts()) {
+      const double startTime = 0.0;
+      context.storeBufferedData(startTime);
+    }
+
+    mapInitialWrittenData();
+    performDataActions({action::Action::WRITE_MAPPING_POST});
+
+    PRECICE_DEBUG("Initialize coupling schemes");
+    _couplingScheme->initialize();
+
+    mapInitialReadData();
+    performDataActions({action::Action::READ_MAPPING_POST});
+
+    handleExports(ExportTiming::Initial);
+
+    resetWrittenData();
   }
-
-  mapInitialWrittenData();
-  performDataActions({action::Action::WRITE_MAPPING_POST});
-
-  PRECICE_DEBUG("Initialize coupling schemes");
-  _couplingScheme->initialize();
-
-  mapInitialReadData();
-  performDataActions({action::Action::READ_MAPPING_POST});
-
-  handleExports(ExportTiming::Initial);
-
-  resetWrittenData();
 
   e.stop();
   sep.pop();
 
   _state = State::Initialized;
-  PRECICE_INFO(_couplingScheme->printCouplingState());
-  _solverAdvanceEvent = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
+  if (!reinitializing) {
+    PRECICE_INFO(_couplingScheme->printCouplingState());
+    _solverAdvanceEvent = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
+  }
 }
 
 void ParticipantImpl::advance(
