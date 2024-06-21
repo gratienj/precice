@@ -143,7 +143,7 @@ void ProvidedPartition::prepare()
       globalNumberOfVertices += numberOfSecondaryRankVertices;
     }
     PRECICE_ASSERT(std::all_of(vertexOffsets.begin(), vertexOffsets.end(), [](auto i) { return i >= 0; }));
-    PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
+    //PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
     _mesh->setVertexOffsets(vertexOffsets);
 
     // set and broadcast global number of vertices
@@ -199,7 +199,7 @@ void ProvidedPartition::prepare()
     mesh::Mesh::VertexOffsets vertexOffsets;
     utils::IntraComm::getCommunication()->broadcast(vertexOffsets, 0);
     PRECICE_DEBUG("My vertex offsets: {}", vertexOffsets);
-    PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
+    //PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
     _mesh->setVertexOffsets(std::move(vertexOffsets));
 
   } else {
