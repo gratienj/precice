@@ -34,7 +34,7 @@
  *
  * The third possibility was to separate the approximation of the Jacobian from
  * the common stuff like handling V,W matrices in the acceleration.
- * Here, we have a class QNAcceleration that handles the V,W stuff an d the basic
+ * Here, we have a class QNAcceleration that handles the V,W stuff and the basic
  * scheme of the QN update. Furthermore we have a base class (or rather interface)
  * JacobianApproximation with sub classes IQNIMVJAPX and IQNAPX that handle all the
  * specialized stuff like Jacobian approximation, handling of secondary data etc.
@@ -70,7 +70,8 @@ public:
       int                     filter,
       double                  singularityLimit,
       std::vector<int>        dataIDs,
-      impl::PtrPreconditioner preconditioner);
+      impl::PtrPreconditioner preconditioner,
+      bool                    reduced = true);
 
   /**
    * @brief Destructor, empty.
@@ -248,7 +249,7 @@ protected:
   virtual void updateDifferenceMatrices(const DataMap &cplData);
 
   /// Splits up QN system vector back into the coupling data
-  virtual void splitCouplingData(const DataMap &cplData);
+  virtual void applyQNUpdateToCouplingData(const DataMap &cplData, Eigen::VectorXd xUpdate);
 
   /// Applies the filter method for the least-squares system, defined in the configuration
   virtual void applyFilter();
@@ -262,12 +263,32 @@ protected:
   /// Removes one iteration from V,W matrices and adapts _matrixCols.
   virtual void removeMatrixColumn(int columnIndex);
 
-  /// Wwrites info to the _infostream (also in parallel)
+  /// Writes info to the _infostream (also in parallel)
   void writeInfo(const std::string &s, bool allProcs = false);
+
+  /// Concatenates the coupling data into a long vector
+  void concatenateCouplingData(
+      const DataMap &cplData, const std::vector<DataID> &dataIDs, Eigen::VectorXd &targetValues, Eigen::VectorXd &targetOldValues);
 
   int its = 0, tWindows = 0;
 
 private:
+  /// @brief Saves the time grid of each data field.
+  void saveTimeGrid(const DataMap &cplData);
+
+  /// @brief ReSizes the vectors _residuals, _oldresiduals, _Xtilde, _OldXtilde such that they get the correct dimensions when using waveform iterations
+  void reSizeVectors(const DataMap &cplData, const std::vector<DataID> &dataIDs);
+
+  /// @brief Moves the time grid to the new time window
+  void moveTimeGridToNewWindow(const DataMap &cplData, const std::vector<DataID> &dataIDs);
+
+  /// @brief List of the time grid to which all the data will be interpolated to
+  /// Stored in a map, since each data entry has its own time grid
+  std::map<int, Eigen::VectorXd> _timeGrids;
+
+  /// @brief  Toggle to switch between using all of the substeps when constructing V_k or only the last time step of the time window.
+  bool _reduced = true;
+
   /// @brief Concatenation of all coupling data involved in the QN system.
   Eigen::VectorXd _values;
 
