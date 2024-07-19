@@ -293,7 +293,7 @@ void ParticipantConfiguration::xmlTagCallback(
     std::string        meshName = tag.getStringAttributeValue(ATTR_MESH);
     mesh::PtrMesh      mesh     = _meshConfig->getMesh(meshName);
     PRECICE_CHECK(mesh,
-                  R"(Participant "{}" attempts to read data "{}" from an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
+                  R"(Participant "{}" attempts to write data "{}" from an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
                   _participants.back()->getName(), dataName, meshName, meshName);
     mesh::PtrData data = getData(mesh, dataName);
     _participants.back()->addWriteData(data, mesh);
@@ -302,7 +302,7 @@ void ParticipantConfiguration::xmlTagCallback(
     std::string        meshName = tag.getStringAttributeValue(ATTR_MESH);
     mesh::PtrMesh      mesh     = _meshConfig->getMesh(meshName);
     PRECICE_CHECK(mesh,
-                  R"(Participant "{}" attempts to write data "{}" to an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
+                  R"(Participant "{}" attempts to read data "{}" to an unknown mesh "{}". <mesh name="{}"> needs to be defined first.)",
                   _participants.back()->getName(), dataName, meshName, meshName);
     mesh::PtrData data = getData(mesh, dataName);
     _participants.back()->addReadData(data, mesh);
@@ -591,33 +591,72 @@ void ParticipantConfiguration::finishParticipantConfiguration(
 
   // Add export contexts
   for (io::ExportContext &exportContext : _exportConfig->exportContexts()) {
-    io::PtrExport exporter;
-    if (exportContext.type == VALUE_VTK) {
-      // This is handled with respect to the current configuration context.
-      // Hence, this is potentially wrong for every participant other than context.name.
-      if (context.size > 1) {
-        // Only display the warning message if this participant configuration is the current one.
-        if (context.name == participant->getName()) {
-          PRECICE_ERROR("You attempted to use the legacy VTK exporter with the parallel participant {}, which isn't supported."
-                        "Migrate to another exporter, such as the VTU exporter by specifying \"<export:vtu ... />\"  instead of \"<export:vtk ... />\".",
-                        participant->getName());
-        }
-      } else {
-        exporter = io::PtrExport(new io::ExportVTK());
-      }
-    } else if (exportContext.type == VALUE_VTU) {
-      exporter = io::PtrExport(new io::ExportVTU());
-    } else if (exportContext.type == VALUE_VTP) {
-      exporter = io::PtrExport(new io::ExportVTP());
-    } else if (exportContext.type == VALUE_CSV) {
-      exporter = io::PtrExport(new io::ExportCSV());
-    } else {
-      PRECICE_ERROR("Participant {} defines an <export/> tag of unknown type \"{}\".",
-                    _participants.back()->getName(), exportContext.type);
-    }
-    exportContext.exporter = std::move(exporter);
+    auto kind = exportContext.everyIteration ? io::Export::ExportKind::Iterations : io::Export::ExportKind::TimeWindows;
+    // Create one exporter per mesh
+    for (const auto &meshContext : participant->usedMeshContexts()) {
 
-    _participants.back()->addExportContext(exportContext);
+      exportContext.meshName = meshContext->mesh->getName();
+
+      io::PtrExport exporter;
+      if (exportContext.type == VALUE_VTK) {
+        // This is handled with respect to the current configuration context.
+        // Hence, this is potentially wrong for every participant other than context.name.
+        if (context.size > 1) {
+          // Only display the warning message if this participant configuration is the current one.
+          if (context.name == participant->getName()) {
+            PRECICE_ERROR("You attempted to use the legacy VTK exporter with the parallel participant {}, which isn't supported."
+                          "Migrate to another exporter, such as the VTU exporter by specifying \"<export:vtu ... />\"  instead of \"<export:vtk ... />\".",
+                          participant->getName());
+          }
+        } else {
+          exporter = io::PtrExport(new io::ExportVTK(
+              participant->getName(),
+              exportContext.location,
+              *meshContext->mesh,
+              kind,
+              exportContext.everyNTimeWindows,
+              context.rank,
+              context.size));
+        }
+      } else if (exportContext.type == VALUE_VTU) {
+        exporter = io::PtrExport(new io::ExportVTU(
+            participant->getName(),
+            exportContext.location,
+            *meshContext->mesh,
+            kind,
+            exportContext.everyNTimeWindows,
+            context.rank,
+            context.size));
+      } else if (exportContext.type == VALUE_VTP) {
+        exporter = io::PtrExport(new io::ExportVTP(
+            participant->getName(),
+            exportContext.location,
+            *meshContext->mesh,
+            kind,
+            exportContext.everyNTimeWindows,
+            context.rank,
+            context.size));
+      } else if (exportContext.type == VALUE_CSV) {
+        exporter = io::PtrExport(new io::ExportCSV(
+            participant->getName(),
+            exportContext.location,
+            *meshContext->mesh,
+            kind,
+            exportContext.everyNTimeWindows,
+            context.rank,
+            context.size));
+      } else {
+        PRECICE_ERROR("Participant {} defines an <export/> tag of unknown type \"{}\".",
+                      _participants.back()->getName(), exportContext.type);
+      }
+      exportContext.exporter = std::move(exporter);
+
+      _participants.back()->addExportContext(exportContext);
+    }
+    PRECICE_WARN_IF(exportContext.everyNTimeWindows > 1 && exportContext.everyIteration,
+                    "Participant {} defines an exporter of type {} which exports every iteration. "
+                    "This overrides the every-n-time-window value you provided.",
+                    _participants.back()->getName(), exportContext.type);
   }
   _exportConfig->resetExports();
 

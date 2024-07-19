@@ -175,13 +175,8 @@ public:
   /// Finalizes the coupling scheme.
   void finalize() override final;
 
-  /**
-   * @brief Initializes the coupling scheme.
-   *
-   * @param[in] startTime starting time of coupling scheme
-   * @param[in] startTimeWindow starting counter of time window, from which coupling scheme starts
-   */
-  void initialize(double startTime, int startTimeWindow) override final;
+  /// @copydoc cplscheme::CouplingScheme::initialize()
+  void initialize() override final;
 
   ChangedMeshes firstSynchronization(const ChangedMeshes &changes) override final;
 
@@ -403,6 +398,9 @@ protected:
   /// @copydoc cplscheme::CouplingScheme::implicitDataToReceive()
   ImplicitData implicitDataToReceive() const override;
 
+  /// @copydoc cplscheme::CouplingScheme::localParticipant()
+  std::string localParticipant() const override final;
+
 private:
   /// Coupling mode used by coupling scheme.
   CouplingMode _couplingMode = Undefined;
@@ -491,7 +489,7 @@ private:
 
     std::string logHeader() const
     {
-      return "Res" + measure->getAbbreviation() + "(" + couplingData->getDataName() + ")";
+      return fmt::format("Res{}({}:{})", measure->getAbbreviation(), couplingData->getMeshName(), couplingData->getDataName());
     }
   };
 
@@ -533,6 +531,11 @@ private:
    * @brief If any required actions are open, an error message is issued.
    */
   void checkCompletenessRequiredActions();
+
+  /**
+   * @brief Issues an error if coupling data does not contain stamples.
+   */
+  void checkCouplingDataAvailable();
 
   /**
    * @brief Initialize txt writers for iterations and convergence tracking

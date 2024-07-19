@@ -44,7 +44,7 @@ BaseQNAcceleration::BaseQNAcceleration(
       _initialRelaxation(initialRelaxation),
       _maxIterationsUsed(maxIterationsUsed),
       _timeWindowsReused(timeWindowsReused),
-      _dataIDs(std::move(dataIDs)),
+      _primaryDataIDs(std::move(dataIDs)),
       _forceInitialRelaxation(forceInitialRelaxation),
       _qrV(filter),
       _filter(filter),
@@ -92,24 +92,42 @@ void BaseQNAcceleration::initialize(
 
   checkDataIDs(cplData);
 
-  size_t              entries = 0;
+  size_t              primaryDataSize = 0;
+  size_t              dataSize        = 0;
+
   std::vector<size_t> subVectorSizes; // needed for preconditioner
 
-  for (auto &elem : _dataIDs) {
-    entries += cplData.at(elem)->getSize();
+  for (auto &elem : _primaryDataIDs) {
+    primaryDataSize += cplData.at(elem)->getSize();
     subVectorSizes.push_back(cplData.at(elem)->getSize());
+  }
+  dataSize += primaryDataSize;
+
+  // get all the data IDs as a vector
+  _dataIDs = _primaryDataIDs;
+  // Fetch secondary data IDs, to be relaxed with same coefficients from IQN-ILS
+  for (const DataMap::value_type &pair : cplData) {
+    if (not utils::contained(pair.first, _primaryDataIDs)) {
+      _dataIDs.push_back(pair.first); // add secondary data IDs to the list
+      dataSize += pair.second->getSize();
+    }
   }
 
   _matrixCols.push_front(0);
   _firstIteration  = true;
   _firstTimeWindow = true;
 
-  PRECICE_ASSERT(_oldXTilde.size() == 0);
-  PRECICE_ASSERT(_oldResiduals.size() == 0);
-  _oldXTilde    = Eigen::VectorXd::Zero(entries);
-  _oldResiduals = Eigen::VectorXd::Zero(entries);
-  _residuals    = Eigen::VectorXd::Zero(entries);
-  _values       = Eigen::VectorXd::Zero(entries);
+  PRECICE_ASSERT(_oldPrimaryXTilde.size() == 0);
+  PRECICE_ASSERT(_oldPrimaryResiduals.size() == 0);
+  _oldPrimaryXTilde    = Eigen::VectorXd::Zero(primaryDataSize);
+  _oldPrimaryResiduals = Eigen::VectorXd::Zero(primaryDataSize);
+  _primaryResiduals    = Eigen::VectorXd::Zero(primaryDataSize);
+  _primaryValues       = Eigen::VectorXd::Zero(primaryDataSize);
+  _oldPrimaryValues    = Eigen::VectorXd::Zero(primaryDataSize);
+  _values              = Eigen::VectorXd::Zero(dataSize);
+  _oldValues           = Eigen::VectorXd::Zero(dataSize);
+  _oldXTilde           = Eigen::VectorXd::Zero(dataSize);
+  _residuals           = Eigen::VectorXd::Zero(dataSize);
 
   /**
    *  make dimensions public to all procs,
@@ -120,7 +138,7 @@ void BaseQNAcceleration::initialize(
     PRECICE_ASSERT(utils::IntraComm::getCommunication() != nullptr);
     PRECICE_ASSERT(utils::IntraComm::getCommunication()->isConnected());
 
-    if (entries <= 0) {
+    if (primaryDataSize <= 0) {
       _hasNodesOnInterface = false;
     }
 
@@ -130,26 +148,37 @@ void BaseQNAcceleration::initialize(
      *  we need to multiply the number of vertices with the dimensionality of the vector-valued data for each coupling data.
      */
     _dimOffsets.resize(utils::IntraComm::getSize() + 1);
-    _dimOffsets[0] = 0;
+    _dimOffsetsPrimary.resize(utils::IntraComm::getSize() + 1);
+    _dimOffsets[0]        = 0;
+    _dimOffsetsPrimary[0] = 0;
     for (size_t i = 0; i < _dimOffsets.size() - 1; i++) {
-      int accumulatedNumberOfUnknowns = 0;
+      int accumulatedNumberOfUnknowns        = 0;
+      int accumulatedNumberOfPrimaryUnknowns = 0;
+
       for (auto &elem : _dataIDs) {
         const auto &offsets = cplData.at(elem)->getVertexOffsets();
         accumulatedNumberOfUnknowns += offsets[i] * cplData.at(elem)->getDimensions();
+        if (utils::contained(elem, _primaryDataIDs)) {
+          accumulatedNumberOfPrimaryUnknowns += offsets[i] * cplData.at(elem)->getDimensions();
+        }
       }
-      _dimOffsets[i + 1] = accumulatedNumberOfUnknowns;
+      _dimOffsets[i + 1]        = accumulatedNumberOfUnknowns;
+      _dimOffsetsPrimary[i + 1] = accumulatedNumberOfPrimaryUnknowns;
     }
     PRECICE_DEBUG("Number of unknowns at the interface (global): {}", _dimOffsets.back());
     if (utils::IntraComm::isPrimary()) {
       _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n offsets: {}\n", _dimOffsets.back(), _dimOffsets);
     }
 
-    // test that the computed number of unknown per proc equals the number of entries actually present on that proc
+    // test that the computed number of unknown per proc equals the number of primaryDataSize actually present on that proc
     size_t unknowns = _dimOffsets[utils::IntraComm::getRank() + 1] - _dimOffsets[utils::IntraComm::getRank()];
-    PRECICE_ASSERT(entries == unknowns, entries, unknowns);
+    PRECICE_ASSERT(dataSize == unknowns, dataSize, unknowns);
+    size_t primaryUnknowns = _dimOffsetsPrimary[utils::IntraComm::getRank() + 1] - _dimOffsetsPrimary[utils::IntraComm::getRank()];
+    PRECICE_ASSERT(primaryDataSize == primaryUnknowns, primaryDataSize, primaryUnknowns);
   } else {
-    _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n", entries);
+    _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n", dataSize);
   }
+
 
   // Fetch secondary data IDs, to be relaxed with same coefficients from IQN-ILS
   for (const DataMap::value_type &pair : cplData) {
@@ -159,6 +188,12 @@ void BaseQNAcceleration::initialize(
       _secondaryResiduals[pair.first] = Eigen::VectorXd::Zero(secondaryEntries);
     }
   }
+
+  // set the number of global rows in the QRFactorization.
+  _qrV.setGlobalRows(getPrimaryLSSystemRows());
+
+  _preconditioner->initialize(subVectorSizes);
+
 }
 
 /** ---------------------------------------------------------------------------------------------
@@ -173,7 +208,13 @@ void BaseQNAcceleration::updateDifferenceMatrices(
 {
   PRECICE_TRACE();
 
-  PRECICE_WARN_IF(math::equals(utils::IntraComm::l2norm(_residuals), 0.0),
+  // Compute current residual: vertex-data - oldData
+  _primaryResiduals = _primaryValues;
+  _primaryResiduals -= _oldPrimaryValues;
+  _residuals = _values;
+  _residuals -= _oldValues;
+
+  PRECICE_WARN_IF(math::equals(utils::IntraComm::l2norm(_primaryResiduals), 0.0),
                   "The coupling residual equals almost zero. There is maybe something wrong in your adapter. "
                   "Maybe you always write the same data or you call advance without "
                   "providing new data first or you do not use available read data. "
@@ -195,16 +236,16 @@ void BaseQNAcceleration::updateDifferenceMatrices(
           "The system will probably become bad or ill-conditioned and the quasi-Newton acceleration may not "
           "converge. Maybe the number of allowed columns (\"max-used-iterations\") should be limited.");
 
-      Eigen::VectorXd deltaR = _residuals;
-      deltaR -= _oldResiduals;
+      Eigen::VectorXd deltaR = _primaryResiduals;
+      deltaR -= _oldPrimaryResiduals;
 
       Eigen::VectorXd deltaXTilde = _values;
       deltaXTilde -= _oldXTilde;
 
       double residualMagnitude = utils::IntraComm::l2norm(deltaR);
 
-      if (not math::equals(utils::IntraComm::l2norm(_values), 0.0)) {
-        residualMagnitude /= utils::IntraComm::l2norm(_values);
+      if (not math::equals(utils::IntraComm::l2norm(_primaryValues), 0.0)) {
+        residualMagnitude /= utils::IntraComm::l2norm(_primaryValues);
       }
       PRECICE_WARN_IF(
           math::equals(residualMagnitude, 0.0),
@@ -221,7 +262,7 @@ void BaseQNAcceleration::updateDifferenceMatrices(
         utils::appendFront(_matrixV, deltaR);
         utils::appendFront(_matrixW, deltaXTilde);
 
-        // insert column deltaR = _residuals - _oldResiduals at pos. 0 (front) into the
+        // insert column deltaR = _primaryResiduals - _oldPrimaryResiduals at pos. 0 (front) into the
         // QR decomposition and update decomposition
 
         //apply scaling here
@@ -247,8 +288,9 @@ void BaseQNAcceleration::updateDifferenceMatrices(
         _nbDropCols++;
       }
     }
-    _oldResiduals = _residuals; // Store residuals
-    _oldXTilde    = _values;    // Store x_tilde
+    _oldPrimaryResiduals = _primaryResiduals; // Store residuals
+    _oldPrimaryXTilde    = _primaryValues;    // Store x_tilde
+    _oldXTilde           = _values;           // Store coupling x_tilde
   }
 }
 
@@ -261,15 +303,20 @@ void BaseQNAcceleration::updateDifferenceMatrices(
 void BaseQNAcceleration::performAcceleration(
     DataMap &cplData)
 {
-  PRECICE_TRACE(_dataIDs.size(), cplData.size());
+  PRECICE_TRACE(_primaryDataIDs.size(), cplData.size());
 
   profiling::Event e("cpl.computeQuasiNewtonUpdate", profiling::Synchronize);
 
-  PRECICE_ASSERT(_oldResiduals.size() == _residuals.size(), _oldResiduals.size(), _residuals.size());
-  PRECICE_ASSERT(_values.size() == _oldXTilde.size(), _values.size(), _oldXTilde.size());
 
-  // scale data values (and secondary data values)
-  concatenateCouplingData(cplData, _dataIDs, _values, _residuals);
+  PRECICE_ASSERT(_oldPrimaryResiduals.size() == _oldPrimaryXTilde.size(), _oldPrimaryResiduals.size(), _oldPrimaryXTilde.size());
+  PRECICE_ASSERT(_primaryValues.size() == _oldPrimaryXTilde.size(), _primaryValues.size(), _oldPrimaryXTilde.size());
+  PRECICE_ASSERT(_oldPrimaryValues.size() == _oldPrimaryXTilde.size(), _oldPrimaryValues.size(), _oldPrimaryXTilde.size());
+  PRECICE_ASSERT(_primaryResiduals.size() == _oldPrimaryXTilde.size(), _primaryResiduals.size(), _oldPrimaryXTilde.size());
+
+  // assume data structures associated with the LS system can be updated easily.
+
+  concatenateCouplingData(cplData, _primaryDataIDs, _primaryValues, _oldPrimaryValues);
+  concatenateCouplingData(cplData, _dataIDs, _values, _oldValues);
 
   /** update the difference matrices V,W  includes:
    * scaling of values
@@ -280,11 +327,16 @@ void BaseQNAcceleration::performAcceleration(
 
   if (_firstIteration && (_firstTimeWindow || _forceInitialRelaxation)) {
     PRECICE_DEBUG("   Performing underrelaxation");
-    _oldXTilde    = _values;    // Store x tilde
-    _oldResiduals = _residuals; // Store current residual
+    _oldPrimaryXTilde    = _primaryValues;    // Store x tilde of primary data
+    _oldXTilde           = _values;           // Store x tilde of primary and secondary data
+    _oldPrimaryResiduals = _primaryResiduals; // Store current residual of primary data
 
-    // Perform relaxation on all of the data
-    applyRelaxation(_initialRelaxation, cplData);
+    // Perform constant relaxation
+    // with residual: x_new = x_old + omega * res
+    _residuals *= _initialRelaxation;
+    _residuals += _oldValues;
+    _values = _residuals;
+
   } else {
     PRECICE_DEBUG("   Performing quasi-Newton Step");
 
@@ -313,7 +365,7 @@ void BaseQNAcceleration::performAcceleration(
      * QR-decomposition of V.
      */
 
-    _preconditioner->update(false, _values, _residuals);
+    _preconditioner->update(false, _primaryValues, _primaryResiduals);
     // apply scaling to V, V' := P * V (only needed to reset the QR-dec of V)
     _preconditioner->apply(_matrixV);
 
@@ -365,7 +417,7 @@ void BaseQNAcceleration::performAcceleration(
         _matrixCols.push_front(0); // vital after clear()
         _qrV.reset();
         // set the number of global rows in the QRFactorization.
-        _qrV.setGlobalRows(getLSSystemRows());
+        _qrV.setGlobalRows(getPrimaryLSSystemRows());
         _resetLS = true; // need to recompute _Wtil, Q, R (only for IMVJ efficient update)
       }
     }
@@ -382,6 +434,8 @@ void BaseQNAcceleration::performAcceleration(
      */
     applyQNUpdateToCouplingData(cplData, xUpdate);
   }
+
+  splitCouplingData(cplData); // split the primary and secondary coupling data back into the individual data objects
 
   // number of iterations (usually equals number of columns in LS-system)
   its++;
@@ -433,7 +487,10 @@ void BaseQNAcceleration::iterationsConverged(
   // the most recent differences for the V, W matrices have not been added so far
   // this has to be done in iterations converged, as PP won't be called any more if
   // convergence was achieved
-  concatenateCouplingData(cplData, _dataIDs, _values, _residuals);
+  
+  concatenateCouplingData(cplData, _primaryDataIDs, _primaryValues, _oldPrimaryValues);
+  concatenateCouplingData(cplData, _dataIDs, _values, _oldValues);
+
   updateDifferenceMatrices(cplData);
 
   if (not _matrixCols.empty() && _matrixCols.front() == 0) { // Did only one iteration
@@ -463,7 +520,7 @@ void BaseQNAcceleration::iterationsConverged(
     _firstTimeWindow = false;
 
   // update preconditioner depending on residuals or values (must be after specialized iterations converged --> IMVJ)
-  _preconditioner->update(true, _values, _residuals);
+  _preconditioner->update(true, _primaryValues, _primaryResiduals);
 
   if (_timeWindowsReused == 0) {
     if (_forceInitialRelaxation) {
@@ -471,7 +528,7 @@ void BaseQNAcceleration::iterationsConverged(
       _matrixW.resize(0, 0);
       _qrV.reset();
       // set the number of global rows in the QRFactorization.
-      _qrV.setGlobalRows(getLSSystemRows());
+      _qrV.setGlobalRows(getPrimaryLSSystemRows());
       _matrixCols.clear(); // _matrixCols.push_front() at the end of the method.
     } else {
       /**
@@ -576,6 +633,14 @@ int BaseQNAcceleration::getLSSystemRows()
     return _dimOffsets.back();
   }
   return _residuals.size();
+}
+
+int BaseQNAcceleration::getPrimaryLSSystemRows()
+{
+  if (utils::IntraComm::isParallel()) {
+    return _dimOffsetsPrimary.back();
+  }
+  return _primaryResiduals.size();
 }
 
 void BaseQNAcceleration::writeInfo(

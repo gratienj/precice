@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.22.1)
-project(preCICE VERSION 3.1.1 LANGUAGES CXX)
+project(preCICE VERSION 3.1.2 LANGUAGES CXX)
 set(preCICE_SOVERSION ${preCICE_VERSION_MAJOR})
 
 #
@@ -184,8 +184,14 @@ if(TPL_ENABLE_BOOST)
   set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "" FORCE)
   unset(ENV{BOOST_ROOT})
 endif()
-find_package(Boost 1.74.0 REQUIRED
-  COMPONENTS log log_setup program_options system thread unit_test_framework
+
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
+find_package(Boost 1.74.0 REQUIRED CONFIG
+
+COMPONENTS log log_setup program_options system thread unit_test_framework
   )
 mark_as_advanced(Boost_INCLUDE_DIR Boost_LOG_LIBRARY_RELEASE Boost_LOG_SETUP_LIBRARY_RELEASE Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE Boost_SYSTEM_LIBRARY_RELEASE Boost_THREAD_LIBRARY_RELEASE Boost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE)
 mark_as_advanced(Boost_INCLUDE_DIR Boost_LOG_LIBRARY_DEBUG Boost_LOG_SETUP_LIBRARY_DEBUG Boost_PROGRAM_OPTIONS_LIBRARY_DEBUG Boost_SYSTEM_LIBRARY_DEBUG Boost_THREAD_LIBRARY_DEBUG Boost_UNIT_TEST_FRAMEWORK_LIBRARY_DEBUG)
@@ -269,6 +275,11 @@ if (PRECICE_FEATURE_GINKGO_MAPPING)
 
   # 2. Check if Ginkgo was built with HIP and if HIP is available on the system
   if(PRECICE_WITH_HIP)
+    include(CheckLanguage)
+    check_language(HIP)
+    enable_language(HIP)
+    set(CMAKE_HIP_STANDARD 17)
+    set(CMAKE_HIP_STANDARD_REQUIRED ON)
     if(NOT DEFINED HIP_PATH)
      if(NOT DEFINED $ENV{HIP_PATH})
        set(HIP_PATH "/opt/rocm/hip" CACHE PATH "Path to which HIP has been installed")
@@ -283,11 +294,7 @@ if (PRECICE_FEATURE_GINKGO_MAPPING)
      set(ENV{ROCM_PATH} ${ROCM_PATH})
     endif()
 
-    find_package(HIP REQUIRED)
     find_package(hipsolver REQUIRED)
-
-    set(HIP_CLANG_FLAGS "-fPIC -w")
-    set(HIP_NVCC_FLAGS "-fPIC")
   endif()
 
   if(PRECICE_WITH_OMP)
