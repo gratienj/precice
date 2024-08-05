@@ -257,7 +257,7 @@ protected:
   virtual void updateDifferenceMatrices(const DataMap &cplData);
 
   /// Splits up QN system vector back into the coupling data
-  virtual void applyQNUpdateToCouplingData(const DataMap &cplData, Eigen::VectorXd xUpdate);
+  virtual void applyQNValuesToCouplingData(const DataMap &cplData);
 
   /// Applies the filter method for the least-squares system, defined in the configuration
   virtual void applyFilter();
@@ -273,7 +273,7 @@ protected:
 
   /// Concatenates the coupling data into a long vector
   void concatenateCouplingData(
-      const DataMap &cplData, const std::vector<DataID> &dataIDs, Eigen::VectorXd &targetValues, Eigen::VectorXd &targetOldValues);
+      const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs, Eigen::VectorXd &values, Eigen::VectorXd &oldValues, Eigen::VectorXd &primaryValues, Eigen::VectorXd &oldPrimaryValues);
 
   int its = 0, tWindows = 0;
 
@@ -282,7 +282,7 @@ private:
   void saveTimeGrid(const DataMap &cplData);
 
   /// @brief ReSizes the vectors _residuals, _oldresiduals, _Xtilde, _OldXtilde such that they get the correct dimensions when using waveform iterations
-  void reSizeVectors(const DataMap &cplData, const std::vector<DataID> &dataIDs);
+  void initializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs);
 
   /// @brief Moves the time grid to the new time window
   void moveTimeGridToNewWindow(const DataMap &cplData, const std::vector<DataID> &dataIDs);

@@ -92,108 +92,18 @@ void BaseQNAcceleration::initialize(
 
   checkDataIDs(cplData);
 
-  size_t              primaryDataSize = 0;
-  size_t              dataSize        = 0;
-
-  std::vector<size_t> subVectorSizes; // needed for preconditioner
-
-  for (auto &elem : _primaryDataIDs) {
-    primaryDataSize += cplData.at(elem)->getSize();
-    subVectorSizes.push_back(cplData.at(elem)->getSize());
-  }
-  dataSize += primaryDataSize;
-
   // get all the data IDs as a vector
   _dataIDs = _primaryDataIDs;
   // Fetch secondary data IDs, to be relaxed with same coefficients from IQN-ILS
   for (const DataMap::value_type &pair : cplData) {
     if (not utils::contained(pair.first, _primaryDataIDs)) {
       _dataIDs.push_back(pair.first); // add secondary data IDs to the list
-      dataSize += pair.second->getSize();
     }
   }
 
   _matrixCols.push_front(0);
   _firstIteration  = true;
   _firstTimeWindow = true;
-
-  PRECICE_ASSERT(_oldPrimaryXTilde.size() == 0);
-  PRECICE_ASSERT(_oldPrimaryResiduals.size() == 0);
-  _oldPrimaryXTilde    = Eigen::VectorXd::Zero(primaryDataSize);
-  _oldPrimaryResiduals = Eigen::VectorXd::Zero(primaryDataSize);
-  _primaryResiduals    = Eigen::VectorXd::Zero(primaryDataSize);
-  _primaryValues       = Eigen::VectorXd::Zero(primaryDataSize);
-  _oldPrimaryValues    = Eigen::VectorXd::Zero(primaryDataSize);
-  _values              = Eigen::VectorXd::Zero(dataSize);
-  _oldValues           = Eigen::VectorXd::Zero(dataSize);
-  _oldXTilde           = Eigen::VectorXd::Zero(dataSize);
-  _residuals           = Eigen::VectorXd::Zero(dataSize);
-
-  /**
-   *  make dimensions public to all procs,
-   *  last entry _dimOffsets[IntraComm::getSize()] holds the global dimension, global,n
-   */
-  std::stringstream ss;
-  if (utils::IntraComm::isParallel()) {
-    PRECICE_ASSERT(utils::IntraComm::getCommunication() != nullptr);
-    PRECICE_ASSERT(utils::IntraComm::getCommunication()->isConnected());
-
-    if (primaryDataSize <= 0) {
-      _hasNodesOnInterface = false;
-    }
-
-    /** provide vertex offset information for all processors
-     *  mesh->getVertexOffsets() provides an array that stores the number of mesh vertices on each processor
-     *  This information needs to be gathered for all meshes. To get the number of respective unknowns of a specific processor
-     *  we need to multiply the number of vertices with the dimensionality of the vector-valued data for each coupling data.
-     */
-    _dimOffsets.resize(utils::IntraComm::getSize() + 1);
-    _dimOffsetsPrimary.resize(utils::IntraComm::getSize() + 1);
-    _dimOffsets[0]        = 0;
-    _dimOffsetsPrimary[0] = 0;
-    for (size_t i = 0; i < _dimOffsets.size() - 1; i++) {
-      int accumulatedNumberOfUnknowns        = 0;
-      int accumulatedNumberOfPrimaryUnknowns = 0;
-
-      for (auto &elem : _dataIDs) {
-        const auto &offsets = cplData.at(elem)->getVertexOffsets();
-        accumulatedNumberOfUnknowns += offsets[i] * cplData.at(elem)->getDimensions();
-        if (utils::contained(elem, _primaryDataIDs)) {
-          accumulatedNumberOfPrimaryUnknowns += offsets[i] * cplData.at(elem)->getDimensions();
-        }
-      }
-      _dimOffsets[i + 1]        = accumulatedNumberOfUnknowns;
-      _dimOffsetsPrimary[i + 1] = accumulatedNumberOfPrimaryUnknowns;
-    }
-    PRECICE_DEBUG("Number of unknowns at the interface (global): {}", _dimOffsets.back());
-    if (utils::IntraComm::isPrimary()) {
-      _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n offsets: {}\n", _dimOffsets.back(), _dimOffsets);
-    }
-
-    // test that the computed number of unknown per proc equals the number of primaryDataSize actually present on that proc
-    size_t unknowns = _dimOffsets[utils::IntraComm::getRank() + 1] - _dimOffsets[utils::IntraComm::getRank()];
-    PRECICE_ASSERT(dataSize == unknowns, dataSize, unknowns);
-    size_t primaryUnknowns = _dimOffsetsPrimary[utils::IntraComm::getRank() + 1] - _dimOffsetsPrimary[utils::IntraComm::getRank()];
-    PRECICE_ASSERT(primaryDataSize == primaryUnknowns, primaryDataSize, primaryUnknowns);
-  } else {
-    _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n", dataSize);
-  }
-
-
-  // Fetch secondary data IDs, to be relaxed with same coefficients from IQN-ILS
-  for (const DataMap::value_type &pair : cplData) {
-    if (not utils::contained(pair.first, _dataIDs)) {
-      _secondaryDataIDs.push_back(pair.first);
-      int secondaryEntries            = pair.second->getSize();
-      _secondaryResiduals[pair.first] = Eigen::VectorXd::Zero(secondaryEntries);
-    }
-  }
-
-  // set the number of global rows in the QRFactorization.
-  _qrV.setGlobalRows(getPrimaryLSSystemRows());
-
-  _preconditioner->initialize(subVectorSizes);
-
 }
 
 /** ---------------------------------------------------------------------------------------------
@@ -307,6 +217,11 @@ void BaseQNAcceleration::performAcceleration(
 
   profiling::Event e("cpl.computeQuasiNewtonUpdate", profiling::Synchronize);
 
+  // If its the first iteration of the first time window we want to save the timegrid that the quasi-Newton method uses.
+  if (_firstTimeWindow and _firstIteration) {
+    saveTimeGrid(cplData);
+    initializeVectorsAndPreconditioner(cplData, _dataIDs, _primaryDataIDs);
+  }
 
   PRECICE_ASSERT(_oldPrimaryResiduals.size() == _oldPrimaryXTilde.size(), _oldPrimaryResiduals.size(), _oldPrimaryXTilde.size());
   PRECICE_ASSERT(_primaryValues.size() == _oldPrimaryXTilde.size(), _primaryValues.size(), _oldPrimaryXTilde.size());
@@ -314,9 +229,7 @@ void BaseQNAcceleration::performAcceleration(
   PRECICE_ASSERT(_primaryResiduals.size() == _oldPrimaryXTilde.size(), _primaryResiduals.size(), _oldPrimaryXTilde.size());
 
   // assume data structures associated with the LS system can be updated easily.
-
-  concatenateCouplingData(cplData, _primaryDataIDs, _primaryValues, _oldPrimaryValues);
-  concatenateCouplingData(cplData, _dataIDs, _values, _oldValues);
+  concatenateCouplingData(cplData, _dataIDs, _primaryDataIDs, _values, _oldValues, _primaryValues, _oldPrimaryValues);
 
   /** update the difference matrices V,W  includes:
    * scaling of values
@@ -397,6 +310,9 @@ void BaseQNAcceleration::performAcceleration(
     Eigen::VectorXd xUpdate = Eigen::VectorXd::Zero(_values.size());
     computeQNUpdate(cplData, xUpdate);
 
+    // Apply the Quasi-Newton update
+    _values += xUpdate;
+
     // pending deletion: delete old V, W matrices if timeWindowsReused = 0
     // those were only needed for the first iteration (instead of underrelax.)
     if (_firstIteration && _timeWindowsReused == 0 && not _forceInitialRelaxation) {
@@ -429,13 +345,12 @@ void BaseQNAcceleration::performAcceleration(
         "data in succeeding iterations. Or you do not properly save and reload checkpoints. "
         "If you give the correct data this could also mean that the coupled problem is too hard to solve. Try to use a QR "
         "filter or increase its threshold (larger epsilon).");
-    /**
-     * apply quasiNewton update to waveform
-     */
-    applyQNUpdateToCouplingData(cplData, xUpdate);
   }
 
-  splitCouplingData(cplData); // split the primary and secondary coupling data back into the individual data objects
+  /**
+  * apply quasiNewton update to waveform
+  */
+  applyQNValuesToCouplingData(cplData);
 
   // number of iterations (usually equals number of columns in LS-system)
   its++;
@@ -487,10 +402,15 @@ void BaseQNAcceleration::iterationsConverged(
   // the most recent differences for the V, W matrices have not been added so far
   // this has to be done in iterations converged, as PP won't be called any more if
   // convergence was achieved
-  
-  concatenateCouplingData(cplData, _primaryDataIDs, _primaryValues, _oldPrimaryValues);
-  concatenateCouplingData(cplData, _dataIDs, _values, _oldValues);
 
+  // If its the first iteration of the first time window we want to save the timegrid that the quasi-Newton method uses.
+  // This might happen if we converge in the first iteration
+  if (_firstTimeWindow and _firstIteration) {
+    saveTimeGrid(cplData);
+    initializeVectorsAndPreconditioner(cplData, _dataIDs, _primaryDataIDs);
+  }
+
+  concatenateCouplingData(cplData, _dataIDs, _primaryDataIDs, _values, _oldValues, _primaryValues, _oldPrimaryValues);
   updateDifferenceMatrices(cplData);
 
   if (not _matrixCols.empty() && _matrixCols.front() == 0) { // Did only one iteration
@@ -663,67 +583,52 @@ void BaseQNAcceleration::writeInfo(
 }
 
 void BaseQNAcceleration::concatenateCouplingData(
-    const DataMap &cplData, const std::vector<DataID> &dataIDs, Eigen::VectorXd &values, Eigen::VectorXd &residuals)
+    const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs, Eigen::VectorXd &values,
+    Eigen::VectorXd &oldValues, Eigen::VectorXd &primaryValues, Eigen::VectorXd &oldPrimaryValues)
 {
 
-  // If its the first iteration of the first time window we want to save the timegrid that the quasi-Newton method uses.
-  if (_firstTimeWindow and _firstIteration) {
-    saveTimeGrid(cplData);
-    reSizeVectors(cplData, _dataIDs);
-
-    std::vector<size_t> subVectorSizes; // needed for preconditioner
-    size_t              entries = 0;
-
-    for (auto &elem : _dataIDs) {
-      entries += cplData.at(elem)->getSize();
-      if (!_reduced) {
-        subVectorSizes.push_back(cplData.at(elem)->getSize() * cplData.at(elem)->timeStepsStorage().nTimes());
-      } else {
-        subVectorSizes.push_back(cplData.at(elem)->getSize());
-      }
-    }
-
-    // set the number of global rows in the QRFactorization.
-    _qrV.setGlobalRows(getLSSystemRows());
-
-    _preconditioner->initialize(subVectorSizes);
-  }
-
   // Needs to be called every iteration, since the time window size can vary with participant first
-  moveTimeGridToNewWindow(cplData, _dataIDs);
+  moveTimeGridToNewWindow(cplData, dataIDs);
 
   /// If not reduced quasi-Newton then sample the residual of data in dataIDs to the corresponding time grid in _timeGrids and concatenate everything into a long vector
   if (!_reduced) {
     Eigen::Index offset = 0;
 
-    for (int id : _dataIDs) {
+    for (int id : _primaryDataIDs) {
       auto            waveform = cplData.at(id)->timeStepsStorage();
       Eigen::Index    dataSize = cplData.at(id)->values().size();
       Eigen::VectorXd timeGrid = _timeGrids.at(id);
 
       for (int i = 0; i < timeGrid.size(); i++) {
 
-        Eigen::VectorXd data = waveform.sample(timeGrid(i)) - cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
+        Eigen::VectorXd primaryData    = waveform.sample(timeGrid(i));
+        Eigen::VectorXd oldPrimaryData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
 
-        PRECICE_ASSERT(residuals.size() >= offset + dataSize, "the residuals were not initialized correctly");
+        PRECICE_ASSERT(primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+        PRECICE_ASSERT(oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
 
         for (Eigen::Index i = 0; i < dataSize; i++) {
-          residuals(i + offset) = data(i);
+          primaryValues(i + offset)    = primaryData(i);
+          oldPrimaryValues(i + offset) = oldPrimaryData(i);
         }
         offset += dataSize;
       }
     }
   } else {
     Eigen::Index offset = 0;
-    for (auto id : dataIDs) {
-      Eigen::Index size      = cplData.at(id)->values().size();
-      auto &       values    = cplData.at(id)->values();
-      const auto & oldValues = cplData.at(id)->previousIteration();
-      PRECICE_ASSERT(residuals.size() >= offset + size, "the residuals were not initialized correctly");
-      for (Eigen::Index i = 0; i < size; i++) {
-        residuals(i + offset) = values(i) - oldValues(i);
+    for (auto id : _primaryDataIDs) {
+      Eigen::Index dataSize       = cplData.at(id)->values().size();
+      auto &       primaryData    = cplData.at(id)->values();
+      const auto & oldPrimaryData = cplData.at(id)->previousIteration();
+
+      PRECICE_ASSERT(primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+      PRECICE_ASSERT(oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+
+      for (Eigen::Index i = 0; i < dataSize; i++) {
+        primaryValues(i + offset)    = primaryData(i);
+        oldPrimaryValues(i + offset) = oldPrimaryData(i);
       }
-      offset += size;
+      offset += dataSize;
     }
   }
   /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
@@ -733,30 +638,17 @@ void BaseQNAcceleration::concatenateCouplingData(
     auto            waveform = cplData.at(id)->timeStepsStorage();
     Eigen::Index    dataSize = cplData.at(id)->values().size();
     Eigen::VectorXd timeGrid = _timeGrids.at(id);
+
     for (int i = 0; i < timeGrid.size(); i++) {
 
-      Eigen::VectorXd data = waveform.sample(timeGrid(i));
+      Eigen::VectorXd data    = waveform.sample(timeGrid(i));
+      Eigen::VectorXd oldData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
+
       PRECICE_ASSERT(values.size() >= offset + dataSize, "the values were not initialized correctly");
 
       for (Eigen::Index i = 0; i < dataSize; i++) {
-        values(i + offset) = data(i);
-      }
-      offset += dataSize;
-    }
-  }
-
-  for (int id : _secondaryDataIDs) {
-    auto         waveform = cplData.at(id)->timeStepsStorage();
-    Eigen::Index dataSize = cplData.at(id)->values().size();
-
-    Eigen::VectorXd timeGrid = _timeGrids.at(id);
-    for (int i = 0; i < timeGrid.size(); i++) {
-
-      Eigen::VectorXd data = waveform.sample(timeGrid(i));
-      PRECICE_ASSERT(values.size() >= offset + dataSize, "the values were not initialized correctly");
-
-      for (Eigen::Index j = 0; j < dataSize; j++) {
-        values(j + offset) = data(j);
+        values(i + offset)    = data(i);
+        oldValues(i + offset) = data(i);
       }
       offset += dataSize;
     }
@@ -772,27 +664,109 @@ void BaseQNAcceleration::saveTimeGrid(const DataMap &cplData)
   }
 }
 
-void BaseQNAcceleration::reSizeVectors(const DataMap &cplData, const std::vector<DataID> &dataIDs)
+void BaseQNAcceleration::initializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs)
 {
-  if (!_reduced) {
-    int residualDim = 0;
-    for (auto id : dataIDs) {
-      residualDim += _timeGrids.at(id).size() * cplData.at(id)->values().size();
-    }
-    _residuals.conservativeResize(residualDim);
-    _oldResiduals.conservativeResize(residualDim);
+
+  size_t dataSize = 0;
+  for (auto id : dataIDs) {
+    dataSize += cplData.at(id)->timeStepsStorage().nTimes() * cplData.at(id)->values().size();
   }
 
-  int valueDim = 0;
-  for (auto &pair : cplData) {
-    valueDim += _timeGrids.at(pair.first).size() * pair.second->values().size();
+  size_t              primaryDataSize = 0;
+  std::vector<size_t> subVectorSizes; // needed for preconditioner
+
+  for (auto id : primaryDataIDs) {
+    if (_reduced) {
+      primaryDataSize += cplData.at(id)->values().size();
+      subVectorSizes.push_back(cplData.at(id)->getSize());
+    } else {
+      primaryDataSize += cplData.at(id)->timeStepsStorage().nTimes() * cplData.at(id)->values().size();
+      subVectorSizes.push_back(cplData.at(id)->timeStepsStorage().nTimes() * cplData.at(id)->getSize());
+    }
   }
-  _values.conservativeResize(valueDim);
-  _oldXTilde.conservativeResize(valueDim);
+
+  PRECICE_ASSERT(_values.size() == 0, "Values already initialized, something is wrong with the QN method");
+  PRECICE_ASSERT(_oldValues.size() == 0, "Values already initialized, something is wrong with the QN method");
+  PRECICE_ASSERT(_primaryValues.size() == 0, "Values already initialized, something is wrong with the QN method");
+  PRECICE_ASSERT(_oldPrimaryValues.size() == 0, "Values already initialized, something is wrong with the QN method");
+
+  _oldPrimaryXTilde    = Eigen::VectorXd::Zero(primaryDataSize);
+  _oldPrimaryResiduals = Eigen::VectorXd::Zero(primaryDataSize);
+  _primaryResiduals    = Eigen::VectorXd::Zero(primaryDataSize);
+  _primaryValues       = Eigen::VectorXd::Zero(primaryDataSize);
+  _oldPrimaryValues    = Eigen::VectorXd::Zero(primaryDataSize);
+
+  _values    = Eigen::VectorXd::Zero(dataSize);
+  _oldValues = Eigen::VectorXd::Zero(dataSize);
+  _oldXTilde = Eigen::VectorXd::Zero(dataSize);
+  _residuals = Eigen::VectorXd::Zero(dataSize);
+
+  /**
+   *  make dimensions public to all procs,
+   *  last entry _dimOffsets[IntraComm::getSize()] holds the global dimension, global,n
+   */
+  std::stringstream ss;
+  if (utils::IntraComm::isParallel()) {
+    PRECICE_ASSERT(utils::IntraComm::getCommunication() != nullptr);
+    PRECICE_ASSERT(utils::IntraComm::getCommunication()->isConnected());
+
+    if (primaryDataSize <= 0) {
+      _hasNodesOnInterface = false;
+    }
+
+    /// the code below needs to be adapted to waveforms!!!!!
+
+    /** provide vertex offset information for all processors
+     *  mesh->getVertexOffsets() provides an array that stores the number of mesh vertices on each processor
+     *  This information needs to be gathered for all meshes. To get the number of respective unknowns of a specific processor
+     *  we need to multiply the number of vertices with the dimensionality of the vector-valued data for each coupling data.
+     */
+    _dimOffsets.resize(utils::IntraComm::getSize() + 1);
+    _dimOffsetsPrimary.resize(utils::IntraComm::getSize() + 1);
+    _dimOffsets[0]        = 0;
+    _dimOffsetsPrimary[0] = 0;
+    for (size_t i = 0; i < _dimOffsets.size() - 1; i++) {
+      int accumulatedNumberOfUnknowns        = 0;
+      int accumulatedNumberOfPrimaryUnknowns = 0;
+
+      for (auto &elem : _dataIDs) {
+        const auto &offsets = cplData.at(elem)->getVertexOffsets();
+
+        accumulatedNumberOfUnknowns += offsets[i] * cplData.at(elem)->getDimensions() * cplData.at(elem)->timeStepsStorage().nTimes();
+
+        if (utils::contained(elem, _primaryDataIDs)) {
+          if (_reduced) {
+            accumulatedNumberOfPrimaryUnknowns += offsets[i] * cplData.at(elem)->getDimensions();
+          } else {
+            accumulatedNumberOfPrimaryUnknowns += offsets[i] * cplData.at(elem)->getDimensions() * cplData.at(elem)->timeStepsStorage().nTimes();
+          }
+        }
+      }
+      _dimOffsets[i + 1]        = accumulatedNumberOfUnknowns;
+      _dimOffsetsPrimary[i + 1] = accumulatedNumberOfPrimaryUnknowns;
+    }
+
+    PRECICE_DEBUG("Number of unknowns at the interface (global): {}", _dimOffsets.back());
+    if (utils::IntraComm::isPrimary()) {
+      _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n offsets: {}\n", _dimOffsets.back(), _dimOffsets);
+    }
+
+    // test that the computed number of unknown per proc equals the number of primaryDataSize actually present on that proc
+    size_t unknowns = _dimOffsets[utils::IntraComm::getRank() + 1] - _dimOffsets[utils::IntraComm::getRank()];
+    PRECICE_ASSERT(dataSize == unknowns, dataSize, unknowns);
+    size_t primaryUnknowns = _dimOffsetsPrimary[utils::IntraComm::getRank() + 1] - _dimOffsetsPrimary[utils::IntraComm::getRank()];
+    PRECICE_ASSERT(primaryDataSize == primaryUnknowns, primaryDataSize, primaryUnknowns);
+  } else {
+    _infostringstream << fmt::format("\n--------\n DOFs (global): {}\n", dataSize);
+  }
+
+  // set the number of global rows in the QRFactorization.
+  _qrV.setGlobalRows(getPrimaryLSSystemRows());
+  _preconditioner->initialize(subVectorSizes);
 }
 
-void BaseQNAcceleration::applyQNUpdateToCouplingData(
-    const DataMap &cplData, Eigen::VectorXd xUpdate)
+void BaseQNAcceleration::applyQNValuesToCouplingData(
+    const DataMap &cplData)
 {
 
   PRECICE_TRACE();
@@ -801,8 +775,8 @@ void BaseQNAcceleration::applyQNUpdateToCouplingData(
 
   for (int id : _dataIDs) {
 
-    auto &couplingData = *cplData.at(id);
-    auto  dataSize     = couplingData.sample().values.size();
+    auto & couplingData = *cplData.at(id);
+    size_t dataSize     = couplingData.sample().values.size();
 
     Eigen::VectorXd timeGrid = _timeGrids.at(id);
     couplingData.timeStepsStorage().clear();
@@ -811,34 +785,13 @@ void BaseQNAcceleration::applyQNUpdateToCouplingData(
 
       Eigen::VectorXd temp = Eigen::VectorXd::Zero(dataSize);
       for (int j = 0; j < dataSize; j++) {
-        temp(j) = _values(offset + j) + xUpdate(offset + j);
+        temp(j) = _values(offset + j);
       }
       offset += dataSize;
 
       time::Sample sample(dataSize, temp);
       couplingData.setSampleAtTime(timeGrid(i), sample);
     }
-    couplingData.sample() = couplingData.timeStepsStorage().last().sample;
-  }
-
-  for (int id : _secondaryDataIDs) {
-
-    auto &          couplingData = *cplData.at(id);
-    auto            dataSize     = couplingData.sample().values.size();
-    Eigen::VectorXd timeGrid     = _timeGrids.at(id);
-    couplingData.timeStepsStorage().clear();
-
-    for (int i = 0; i < timeGrid.size(); i++) {
-
-      Eigen::VectorXd temp = Eigen::VectorXd::Zero(dataSize);
-      for (int j = 0; j < dataSize; j++) {
-        temp(j) = _values(offset + j) + xUpdate(offset + j);
-      }
-      offset += dataSize;
-      time::Sample sample(dataSize, temp);
-      couplingData.setSampleAtTime(timeGrid(i), sample);
-    }
-
     couplingData.sample() = couplingData.timeStepsStorage().last().sample;
   }
 }
