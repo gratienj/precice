@@ -229,7 +229,7 @@ void BaseQNAcceleration::performAcceleration(
   PRECICE_ASSERT(_primaryResiduals.size() == _oldPrimaryXTilde.size(), _primaryResiduals.size(), _oldPrimaryXTilde.size());
 
   // assume data structures associated with the LS system can be updated easily.
-  concatenateCouplingData(cplData, _dataIDs, _primaryDataIDs, _values, _oldValues, _primaryValues, _oldPrimaryValues);
+  concatenateCouplingData(cplData);
 
   /** update the difference matrices V,W  includes:
    * scaling of values
@@ -308,7 +308,7 @@ void BaseQNAcceleration::performAcceleration(
      *               Thus, the pseudo inverse needs to be reverted before using it.
      */
     Eigen::VectorXd xUpdate = Eigen::VectorXd::Zero(_values.size());
-    computeQNUpdate(cplData, xUpdate);
+    computeQNUpdate(xUpdate);
 
     // Apply the Quasi-Newton update
     _values += xUpdate;
@@ -410,7 +410,7 @@ void BaseQNAcceleration::iterationsConverged(
     initializeVectorsAndPreconditioner(cplData, _dataIDs, _primaryDataIDs);
   }
 
-  concatenateCouplingData(cplData, _dataIDs, _primaryDataIDs, _values, _oldValues, _primaryValues, _oldPrimaryValues);
+  concatenateCouplingData(cplData);
   updateDifferenceMatrices(cplData);
 
   if (not _matrixCols.empty() && _matrixCols.front() == 0) { // Did only one iteration
@@ -582,13 +582,11 @@ void BaseQNAcceleration::writeInfo(
   _infostringstream << std::flush;
 }
 
-void BaseQNAcceleration::concatenateCouplingData(
-    const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs, Eigen::VectorXd &values,
-    Eigen::VectorXd &oldValues, Eigen::VectorXd &primaryValues, Eigen::VectorXd &oldPrimaryValues)
+void BaseQNAcceleration::concatenateCouplingData(const DataMap &cplData)
 {
 
   // Needs to be called every iteration, since the time window size can vary with participant first
-  moveTimeGridToNewWindow(cplData, dataIDs);
+  moveTimeGridToNewWindow(cplData, _dataIDs);
 
   /// If not reduced quasi-Newton then sample the residual of data in dataIDs to the corresponding time grid in _timeGrids and concatenate everything into a long vector
   if (!_reduced) {
@@ -604,12 +602,12 @@ void BaseQNAcceleration::concatenateCouplingData(
         Eigen::VectorXd primaryData    = waveform.sample(timeGrid(i));
         Eigen::VectorXd oldPrimaryData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
 
-        PRECICE_ASSERT(primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
-        PRECICE_ASSERT(oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+        PRECICE_ASSERT(_primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+        PRECICE_ASSERT(_oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
 
         for (Eigen::Index i = 0; i < dataSize; i++) {
-          primaryValues(i + offset)    = primaryData(i);
-          oldPrimaryValues(i + offset) = oldPrimaryData(i);
+          _primaryValues(i + offset)    = primaryData(i);
+          _oldPrimaryValues(i + offset) = oldPrimaryData(i);
         }
         offset += dataSize;
       }
@@ -621,12 +619,12 @@ void BaseQNAcceleration::concatenateCouplingData(
       auto &       primaryData    = cplData.at(id)->values();
       const auto & oldPrimaryData = cplData.at(id)->previousIteration();
 
-      PRECICE_ASSERT(primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
-      PRECICE_ASSERT(oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+      PRECICE_ASSERT(_primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
+      PRECICE_ASSERT(_oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
 
       for (Eigen::Index i = 0; i < dataSize; i++) {
-        primaryValues(i + offset)    = primaryData(i);
-        oldPrimaryValues(i + offset) = oldPrimaryData(i);
+        _primaryValues(i + offset)    = primaryData(i);
+        _oldPrimaryValues(i + offset) = oldPrimaryData(i);
       }
       offset += dataSize;
     }
@@ -644,11 +642,11 @@ void BaseQNAcceleration::concatenateCouplingData(
       Eigen::VectorXd data    = waveform.sample(timeGrid(i));
       Eigen::VectorXd oldData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
 
-      PRECICE_ASSERT(values.size() >= offset + dataSize, "the values were not initialized correctly");
+      PRECICE_ASSERT(_values.size() >= offset + dataSize, "the values were not initialized correctly");
 
       for (Eigen::Index i = 0; i < dataSize; i++) {
-        values(i + offset)    = data(i);
-        oldValues(i + offset) = data(i);
+        _values(i + offset)    = data(i);
+        _oldValues(i + offset) = data(i);
       }
       offset += dataSize;
     }

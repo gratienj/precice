@@ -68,7 +68,7 @@ void AitkenAcceleration::performAcceleration(
   // Compute aitken relaxation factor
   PRECICE_ASSERT(utils::contained(*_primaryDataIDs.begin(), cplData));
 
-  concatenateCouplingData(cplData, _primaryDataIDs, _values, _oldValues);
+  concatenateCouplingData(cplData);
 
   // Compute current residual = values - oldValues
   Eigen::VectorXd residuals = _values - _oldValues;
@@ -117,6 +117,23 @@ void AitkenAcceleration::iterationsConverged(
     _preconditioner->update(true, _values, _oldResiduals);
   }
   _oldResiduals = Eigen::VectorXd::Constant(_oldResiduals.size(), std::numeric_limits<double>::max());
+}
+
+void AitkenAcceleration::concatenateCouplingData(const DataMap &cplData)
+{
+  Eigen::Index offset = 0;
+  for (auto id : _primaryDataIDs) {
+    Eigen::Index size      = cplData.at(id)->values().size();
+    auto &       values    = cplData.at(id)->values();
+    const auto & oldValues = cplData.at(id)->previousIteration();
+    PRECICE_ASSERT(_values.size() >= offset + size, "Target vector was not initialized.", _values.size(), offset + size);
+    PRECICE_ASSERT(_oldValues.size() >= offset + size, "Target vector was not initialized.");
+    for (Eigen::Index i = 0; i < size; i++) {
+      _values(i + offset)    = values(i);
+      _oldValues(i + offset) = oldValues(i);
+    }
+    offset += size;
+  }
 }
 
 } // namespace precice::acceleration
