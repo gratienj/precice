@@ -64,6 +64,9 @@ protected:
   /// Checks if all dataIDs are contained in cplData
   void checkDataIDs(const DataMap &cplData) const;
 
+  /// Concatenates all coupling data involved into a single vector
+  virtual void concatenateCouplingData(const DataMap &cplData) = 0;
+
   /// performs a relaxation given a relaxation factor omega
   static void applyRelaxation(double omega, DataMap &cplData);
 };

@@ -36,6 +36,10 @@ public:
   virtual void iterationsConverged(
       const DataMap &cpldata);
 
+protected:
+  /// Concatenates all coupling data involved into a single vector
+  void concatenateCouplingData(const DataMap &cplData) override final;
+
 private:
   logging::Logger _log{"acceleration::AitkenAcceleration"};
 
@@ -53,9 +57,6 @@ private:
 
   /// Preconditioner for data vector if multiple data sets are used.
   impl::PtrPreconditioner _preconditioner;
-
-  /// Concatenates all coupling data involved into a single vector
-  void concatenateCouplingData(const DataMap &cplData);
 };
 } // namespace acceleration
 } // namespace precice

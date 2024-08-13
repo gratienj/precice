@@ -272,7 +272,7 @@ protected:
   void writeInfo(const std::string &s, bool allProcs = false);
 
   /// Concatenates the coupling data into a long vector
-  void concatenateCouplingData(const DataMap &cplData);
+  void concatenateCouplingData(const DataMap &cplData) override final;
 
   int its = 0, tWindows = 0;
 
