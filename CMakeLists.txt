@@ -224,12 +224,6 @@ if (PRECICE_FEATURE_MPI_COMMUNICATION)
 
   find_package(MPI REQUIRED)
   message(STATUS "MPI Version: ${MPI_CXX_LIBRARY_VERSION_STRING}")
-
-  # We need to disable the MPIPorts tests in case we detect Open MPI
-  if(MPI_CXX_LIBRARY_VERSION_STRING MATCHES "Open MPI")
-    set(PRECICE_MPI_OPENMPI TRUE CACHE BOOL "Is the MPI implementation OpenMPI?" FORCE)
-    mark_as_advanced(PRECICE_MPI_OPENMPI)
-  endif()
 endif()
 
 # Option: PETSC
@@ -407,22 +401,8 @@ if(PRECICE_FEATURE_LIBBACKTRACE_STACKTRACES)
   target_link_libraries(preciceCore PRIVATE internal::libbacktrace)
 endif()
 
-# Force Intel to honor nan and infinite in every floating point mode
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.20)
-  # Compiler ID is supported after CMake 3.20
-  target_compile_options(preciceCore PUBLIC $<$<CXX_COMPILER_ID:IntelLLVM>:-fhonor-infinities -fhonor-nans>)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  # Compiler ID is supported after CMake 3.20 and IntelLLVM shows up as LLVM
-  # We need to inspect the version
-  execute_process(
-      COMMAND ${CMAKE_CXX_COMPILER} --version
-      OUTPUT_VARIABLE PRECICE_CXX_COMPILER_VERSION
-  )
-  mark_as_advanced(PRECICE_CXX_COMPILER_VERSION)
-  if(PRECICE_CXX_COMPILER_VERSION MATCHES "Intel.+oneAPI DPC")
-    target_compile_options(preciceCore PUBLIC -fhonor-infinities -fhonor-nans)
-  endif()
-endif()
+# Force Intel compiler to honor nan and infinite and use value-preserving floating point mode
+target_compile_options(preciceCore PUBLIC $<$<CXX_COMPILER_ID:IntelLLVM>:-fhonor-infinities -fhonor-nans -fp-model=precise>)
 
 # Setup Eigen3
 target_link_libraries(preciceCore PUBLIC Eigen3::Eigen)
@@ -538,11 +518,17 @@ target_link_libraries(precice PRIVATE preciceCore)
 include(${CMAKE_CURRENT_LIST_DIR}/src/sources.cmake)
 
 # File Configuration
-include(GenerateVersionInformation)
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/DetectGitRevision.cmake)
 configure_file("${PROJECT_SOURCE_DIR}/src/precice/impl/versions.hpp.in" "${PROJECT_BINARY_DIR}/src/precice/impl/versions.hpp" @ONLY)
 configure_file("${PROJECT_SOURCE_DIR}/src/testing/SourceLocation.hpp.in" "${PROJECT_BINARY_DIR}/src/testing/SourceLocation.hpp" @ONLY)
 configure_file("${PROJECT_SOURCE_DIR}/src/precice/Version.h.in" "${PROJECT_BINARY_DIR}/src/precice/Version.h" @ONLY)
+
+# Configure version file generation
+include(GenerateVersionInformation)
+# Configure CMake variables only. The result contains a placeholder for the git revision
+configure_file("${PROJECT_SOURCE_DIR}/src/precice/impl/versions.cpp.in" "${PROJECT_BINARY_DIR}/src/precice/impl/versions.cpp.in" @ONLY)
+# Dynamically replace the git revision information.
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/DetectGitRevision.cmake)
+
 
 # Setup export header
 include(GenerateExportHeader)
