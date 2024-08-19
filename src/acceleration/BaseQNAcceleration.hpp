@@ -204,6 +204,9 @@ protected:
   /// @brief Stores x tilde deltas, where x tilde are values computed by solvers.
   Eigen::MatrixXd _matrixW;
 
+  /// @brief  Toggle to switch between using all of the substeps when constructing V_k or only the last time step of the time window.
+  bool _reduced = true;
+
   /// @brief Stores the current QR decomposition ov _matrixV, can be updated via deletion/insertion of columns
   impl::QRFactorization _qrV;
 
@@ -283,15 +286,19 @@ private:
   /// @brief ReSizes the vectors _residuals, _oldresiduals, _Xtilde, _OldXtilde such that they get the correct dimensions when using waveform iterations
   void initializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs);
 
+  /**
+   * @brief handles the initialization of matrices and vectors in the sub-classes
+   *
+   * called by the initializeVectorsAndPreconditioner method in the BaseQNAcceleration class
+   */
+  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs) = 0;
+
   /// @brief Moves the time grid to the new time window
   void moveTimeGridToNewWindow(const DataMap &cplData, const std::vector<DataID> &dataIDs);
 
   /// @brief List of the time grid to which all the data will be interpolated to
   /// Stored in a map, since each data entry has its own time grid
   std::map<int, Eigen::VectorXd> _timeGrids;
-
-  /// @brief  Toggle to switch between using all of the substeps when constructing V_k or only the last time step of the time window.
-  bool _reduced = true;
 
   /// @brief Concatenation of all primary data involved in the QN system.
   Eigen::VectorXd _primaryValues;

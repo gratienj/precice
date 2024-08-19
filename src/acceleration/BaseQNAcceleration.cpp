@@ -239,13 +239,6 @@ void BaseQNAcceleration::performAcceleration(
    */
   updateDifferenceMatrices(cplData);
 
-  std::cout << "\n values \n";
-  std::cout << _values;
-  std::cout << "\n old values \n";
-  std::cout << _oldValues;
-  std::cout << "\n residuals \n";
-  std::cout << _residuals;
-
   if (_firstIteration && (_firstTimeWindow || _forceInitialRelaxation)) {
     PRECICE_DEBUG("   Performing underrelaxation");
     _oldPrimaryXTilde    = _primaryValues;    // Store x tilde of primary data
@@ -654,7 +647,7 @@ void BaseQNAcceleration::concatenateCouplingData(const DataMap &cplData)
 
       for (Eigen::Index i = 0; i < dataSize; i++) {
         _values(i + offset)    = data(i);
-        _oldValues(i + offset) = data(i);
+        _oldValues(i + offset) = oldData(i);
       }
       offset += dataSize;
     }
@@ -769,6 +762,8 @@ void BaseQNAcceleration::initializeVectorsAndPreconditioner(const DataMap &cplDa
   // set the number of global rows in the QRFactorization.
   _qrV.setGlobalRows(getPrimaryLSSystemRows());
   _preconditioner->initialize(subVectorSizes);
+
+  specializedInitializeVectorsAndPreconditioner(cplData, dataIDs, primaryDataIDs);
 }
 
 void BaseQNAcceleration::applyQNValuesToCouplingData(

@@ -61,6 +61,9 @@ private:
 
   /// Removes one iteration from V,W matrices and adapts _matrixCols.
   virtual void removeMatrixColumn(int columnIndex);
+
+  /// @brief Initializes specialised matrix structures for the IQNILS acceleration
+  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs){};
 };
 } // namespace acceleration
 } // namespace precice
