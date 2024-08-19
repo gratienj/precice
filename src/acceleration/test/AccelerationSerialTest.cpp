@@ -71,11 +71,13 @@ void testIQNIMVJPP(bool exchangeSubsteps)
   displacements->values().resize(4);
   displacements->values() << 1.0, 1.0, 1.0, 1.0;
   displacements->setSampleAtTime(0, displacements->sample());
+  displacements->setSampleAtTime(1, displacements->sample());
 
   // init forces
   forces->values().resize(4);
   forces->values() << 0.2, 0.2, 0.2, 0.2;
   forces->setSampleAtTime(0, forces->sample());
+  forces->setSampleAtTime(1, forces->sample());
 
   cplscheme::PtrCouplingData dpcd = makeCouplingData(displacements, dummyMesh, exchangeSubsteps);
   cplscheme::PtrCouplingData fpcd = makeCouplingData(forces, dummyMesh, exchangeSubsteps);
@@ -170,11 +172,13 @@ void testVIQNPP(bool exchangeSubsteps)
   displacements->values().resize(4);
   displacements->values() << 1.0, 1.0, 1.0, 1.0;
   displacements->setSampleAtTime(0, displacements->sample());
+  displacements->setSampleAtTime(1, displacements->sample());
 
   // init forces
   forces->values().resize(4);
   forces->values() << 0.2, 0.2, 0.2, 0.2;
   forces->setSampleAtTime(0, forces->sample());
+  forces->setSampleAtTime(1, forces->sample());
 
   cplscheme::PtrCouplingData dpcd = makeCouplingData(displacements, dummyMesh, exchangeSubsteps);
   cplscheme::PtrCouplingData fpcd = makeCouplingData(forces, dummyMesh, exchangeSubsteps);
@@ -190,6 +194,7 @@ void testVIQNPP(bool exchangeSubsteps)
 
   displacements->values() << 1.0, 2.0, 3.0, 4.0;
   displacements->setSampleAtTime(1, displacements->sample());
+
   forces->values() << 0.1, 0.1, 0.1, 0.1;
   forces->setSampleAtTime(1, forces->sample());
 

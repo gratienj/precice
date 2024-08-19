@@ -213,6 +213,7 @@ void BaseQNAcceleration::updateDifferenceMatrices(
 void BaseQNAcceleration::performAcceleration(
     DataMap &cplData)
 {
+
   PRECICE_TRACE(_primaryDataIDs.size(), cplData.size());
 
   profiling::Event e("cpl.computeQuasiNewtonUpdate", profiling::Synchronize);
@@ -237,6 +238,13 @@ void BaseQNAcceleration::performAcceleration(
    * appending the difference matrices
    */
   updateDifferenceMatrices(cplData);
+
+  std::cout << "\n values \n";
+  std::cout << _values;
+  std::cout << "\n old values \n";
+  std::cout << _oldValues;
+  std::cout << "\n residuals \n";
+  std::cout << _residuals;
 
   if (_firstIteration && (_firstTimeWindow || _forceInitialRelaxation)) {
     PRECICE_DEBUG("   Performing underrelaxation");
@@ -787,10 +795,9 @@ void BaseQNAcceleration::applyQNValuesToCouplingData(
       }
       offset += dataSize;
 
-      time::Sample sample(dataSize, temp);
-      couplingData.setSampleAtTime(timeGrid(i), sample);
+      couplingData.sample().values = temp;
+      couplingData.setSampleAtTime(timeGrid(i), couplingData.sample());
     }
-    couplingData.sample() = couplingData.timeStepsStorage().last().sample;
   }
 }
 

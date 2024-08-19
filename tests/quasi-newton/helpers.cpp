@@ -311,6 +311,10 @@ void runTestQNWithWaveforms(std::string const &config, TestContext const &contex
       outValues[1] = inValues[0] + t;
     }
 
+    std::cout << "\n";
+    std::cout << outValues[0];
+    std::cout << outValues[1];
+
     // save the outValues in savedValues to check for correctness later
     savedValues(nSubStepsDone, 0) = outValues[0];
     savedValues(nSubStepsDone, 1) = outValues[1];
@@ -328,6 +332,11 @@ void runTestQNWithWaveforms(std::string const &config, TestContext const &contex
       nSubStepsDone = 0;
       t             = timeCheckpoint;
       iterations++;
+
+      std::cout << "\n \n ************************* \n";
+      std::cout << "First iteration done";
+      std::cout << context.isNamed("SolverOne");
+      std::cout << "\n ************************* \n";
     }
   }
   interface.finalize();
