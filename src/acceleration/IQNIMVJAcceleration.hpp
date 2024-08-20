@@ -193,7 +193,7 @@ private:
   void removeMatrixColumnRSLS(int columnINdex);
 
   /// @brief initializes the matrix sizes
-  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs);
+  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData);
 };
 } // namespace acceleration
 } // namespace precice

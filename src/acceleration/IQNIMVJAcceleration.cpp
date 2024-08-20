@@ -773,7 +773,7 @@ void IQNIMVJAcceleration::removeMatrixColumnRSLS(
   }
 }
 
-void IQNIMVJAcceleration::specializedInitializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs)
+void IQNIMVJAcceleration::specializedInitializeVectorsAndPreconditioner(const DataMap &cplData)
 {
   int entries        = _primaryResiduals.size();
   int cplDataEntries = _residuals.size();

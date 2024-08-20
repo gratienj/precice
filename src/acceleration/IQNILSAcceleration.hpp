@@ -63,7 +63,7 @@ private:
   virtual void removeMatrixColumn(int columnIndex);
 
   /// @brief Initializes specialised matrix structures for the IQNILS acceleration
-  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs){};
+  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData){};
 };
 } // namespace acceleration
 } // namespace precice

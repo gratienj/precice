@@ -284,17 +284,17 @@ private:
   void saveTimeGrid(const DataMap &cplData);
 
   /// @brief ReSizes the vectors _residuals, _oldresiduals, _Xtilde, _OldXtilde such that they get the correct dimensions when using waveform iterations
-  void initializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs);
+  void initializeVectorsAndPreconditioner(const DataMap &cplData);
 
   /**
    * @brief handles the initialization of matrices and vectors in the sub-classes
    *
    * called by the initializeVectorsAndPreconditioner method in the BaseQNAcceleration class
    */
-  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData, const std::vector<DataID> &dataIDs, const std::vector<DataID> &primaryDataIDs) = 0;
+  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData) = 0;
 
   /// @brief Moves the time grid to the new time window
-  void moveTimeGridToNewWindow(const DataMap &cplData, const std::vector<DataID> &dataIDs);
+  void moveTimeGridToNewWindow(const DataMap &cplData);
 
   /// @brief List of the time grid to which all the data will be interpolated to
   /// Stored in a map, since each data entry has its own time grid
