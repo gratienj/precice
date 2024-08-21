@@ -322,6 +322,9 @@ private:
   /// Are experimental API calls allowed?
   bool _allowsExperimental = false;
 
+  /// Are experimental remeshing API calls allowed?
+  bool _allowsRemeshing = false;
+
   /// Are participants waiting for each other in finalize?
   bool _waitInFinalize = false;
 

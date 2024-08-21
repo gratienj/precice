@@ -205,6 +205,7 @@ void ParticipantImpl::configure(
   _meshLock.clear();
 
   _allowsExperimental = config.allowsExperimental();
+  _allowsRemeshing    = config.allowsRemeshing();
   _waitInFinalize     = config.waitInFinalize();
   _accessor           = determineAccessingParticipant(config);
   _accessor->setMeshIdManager(config.getMeshConfiguration()->extractMeshIdManager());
@@ -376,9 +377,11 @@ void ParticipantImpl::advance(
   }
 #endif
 
-  int totalMeshesChanges = getTotalMeshChanges();
-  if (reinitHandshake(totalMeshesChanges)) {
-    reinitialize();
+  if (_allowsRemeshing) {
+    int totalMeshesChanges = getTotalMeshChanges();
+    if (reinitHandshake(totalMeshesChanges)) {
+      reinitialize();
+    }
   }
 
   // Update the coupling scheme time state. Necessary to get correct remainder.
@@ -657,6 +660,7 @@ void ParticipantImpl::resetMesh(
     std::string_view meshName)
 {
   PRECICE_EXPERIMENTAL_API();
+  PRECICE_CHECK(_allowsRemeshing, "Cannot reset meshes. This feature needs to be enabled using <precice-configuration experimental=\"1\" allow-remeshing=\"1\">.");
   PRECICE_TRACE(meshName);
   PRECICE_VALIDATE_MESH_NAME(meshName);
   impl::MeshContext &context = _accessor->usedMeshContext(meshName);
@@ -1635,9 +1639,10 @@ ParticipantImpl::MappedSamples ParticipantImpl::mappedSamples() const
 
 int ParticipantImpl::getTotalMeshChanges() const
 {
-  Event e("intra-handshake", profiling::Synchronize);
   PRECICE_TRACE();
-  int localMeshesChanges = _meshLock.countUnlocked();
+  PRECICE_ASSERT(_allowsRemeshing);
+  Event e("intra-handshake", profiling::Synchronize);
+  int   localMeshesChanges = _meshLock.countUnlocked();
   PRECICE_DEBUG("Local Mesh Changes: {}", localMeshesChanges);
 
   int totalMeshesChanges = 0;
@@ -1649,6 +1654,7 @@ int ParticipantImpl::getTotalMeshChanges() const
 bool ParticipantImpl::reinitHandshake(bool requestReinit) const
 {
   PRECICE_TRACE();
+  PRECICE_ASSERT(_allowsRemeshing);
   Event e("inter-handshake", profiling::Synchronize);
 
   if (not utils::IntraComm::isSecondary()) {
@@ -1683,6 +1689,7 @@ bool ParticipantImpl::reinitHandshake(bool requestReinit) const
 void ParticipantImpl::reinitialize()
 {
   PRECICE_TRACE();
+  PRECICE_ASSERT(_allowsRemeshing);
   PRECICE_INFO("Reinitializing Participant");
   Event                        e("reinitialize");
   profiling::ScopedEventPrefix sep("reinitialize/");
