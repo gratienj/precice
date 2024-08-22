@@ -377,15 +377,16 @@ void ParticipantImpl::advance(
   }
 #endif
 
-  if (_allowsRemeshing) {
+  // Update the coupling scheme time state. Necessary to get correct remainder.
+  const bool isAtWindowEnd = _couplingScheme->addComputedTime(computedTimeStepSize);
+
+  if (_allowsRemeshing && isAtWindowEnd) {
     int totalMeshesChanges = getTotalMeshChanges();
     if (reinitHandshake(totalMeshesChanges)) {
       reinitialize();
     }
   }
 
-  // Update the coupling scheme time state. Necessary to get correct remainder.
-  const bool   isAtWindowEnd = _couplingScheme->addComputedTime(computedTimeStepSize);
   const double timeSteppedTo = _couplingScheme->getTime();
   const auto   dataToReceive = _couplingScheme->implicitDataToReceive();
 
