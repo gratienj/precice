@@ -93,15 +93,24 @@ target_sources(testprecice
     tests/quasi-newton/serial/TestQN8.cpp
     tests/quasi-newton/serial/TestQN9.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshBoth.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshBoth2LI.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshInput.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshInput2LI.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshOutput.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshOutput2LI.cpp
     tests/remeshing/parallel/explicit/changed-partition/OverlapBoth.cpp
+    tests/remeshing/parallel/explicit/changed-partition/OverlapBoth2LI.cpp
     tests/remeshing/parallel/explicit/changed-partition/ScatterOutputs.cpp
+    tests/remeshing/parallel/explicit/changed-partition/ScatterOutputs2LI.cpp
     tests/remeshing/parallel/explicit/changed-partition/SwapOutputs.cpp
+    tests/remeshing/parallel/explicit/changed-partition/SwapOutputs2LI.cpp
     tests/remeshing/parallel/explicit/helper.hpp
     tests/remeshing/parallel/explicit/noop/RemeshBoth.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshBoth2LI.cpp
     tests/remeshing/parallel/explicit/noop/RemeshInput.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshInput2LI.cpp
     tests/remeshing/parallel/explicit/noop/RemeshOutput.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshOutput2LI.cpp
     tests/serial/AitkenAcceleration.cpp
     tests/serial/ImplicitCheckpointing.cpp
     tests/serial/PreconditionerBug.cpp
