@@ -120,6 +120,10 @@ void ProvidedPartition::prepare()
   PRECICE_INFO("Prepare partition for mesh {}", _mesh->getName());
   Event e("partition.prepareMesh." + _mesh->getName(), profiling::Synchronize);
 
+  //PRECICE_ASSERT(_mesh->getGlobalNumberOfVertices() <= 0, _mesh->getGlobalNumberOfVertices());
+  //PRECICE_ASSERT(_mesh->getVertexOffsets().empty(), _mesh->getVertexOffsets());
+  PRECICE_ASSERT(_mesh->getVertexDistribution().empty(), _mesh->getVertexDistribution());
+
   int numberOfVertices = _mesh->nVertices();
 
   if (utils::IntraComm::isPrimary()) {
@@ -221,6 +225,15 @@ void ProvidedPartition::prepare()
   for (mesh::Vertex &v : _mesh->vertices()) {
     v.setOwner(true);
   }
+
+  PRECICE_ASSERT(_mesh->getGlobalNumberOfVertices() > 0);
+  PRECICE_ASSERT(!_mesh->getVertexOffsets().empty());
+
+  /* TODO check why this doesn't work
+  if (!utils::IntraComm::isParallel() || utils::IntraComm::isPrimary()) {
+    PRECICE_ASSERT(!_mesh->getVertexDistribution().empty());
+  }
+  */
 }
 
 void ProvidedPartition::compute()
