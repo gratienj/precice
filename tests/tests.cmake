@@ -92,6 +92,16 @@ target_sources(testprecice
     tests/quasi-newton/serial/TestQN7.cpp
     tests/quasi-newton/serial/TestQN8.cpp
     tests/quasi-newton/serial/TestQN9.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshBoth.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshInput.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshOutput.cpp
+    tests/remeshing/parallel/explicit/changed-partition/OverlapBoth.cpp
+    tests/remeshing/parallel/explicit/changed-partition/ScatterOutputs.cpp
+    tests/remeshing/parallel/explicit/changed-partition/SwapOutputs.cpp
+    tests/remeshing/parallel/explicit/helper.hpp
+    tests/remeshing/parallel/explicit/noop/RemeshBoth.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshInput.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshOutput.cpp
     tests/serial/AitkenAcceleration.cpp
     tests/serial/ImplicitCheckpointing.cpp
     tests/serial/PreconditionerBug.cpp
@@ -326,4 +336,4 @@ target_sources(testprecice
     )
 
 # Contains the list of integration test suites
-set(PRECICE_TEST_SUITES GeometricMultiscale Parallel QuasiNewton Serial)
+set(PRECICE_TEST_SUITES GeometricMultiscale Parallel QuasiNewton Remeshing Serial)
