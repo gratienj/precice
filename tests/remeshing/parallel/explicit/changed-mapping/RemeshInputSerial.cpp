@@ -1,5 +1,6 @@
 #ifndef PRECICE_NO_MPI
 
+#include "precice/Participant.hpp"
 #include "testing/QuickTest.hpp"
 #include "testing/Testing.hpp"
 
@@ -14,7 +15,7 @@ BOOST_AUTO_TEST_CASE(RemeshInputSerial)
   using namespace precice::testing;
   constexpr double y = 0.0;
 
-  Participant participant{context.name, context.config(), context.rank, context.size};
+  precice::Participant participant{context.name, context.config(), context.rank, context.size};
 
   // A - Static Geometry
   if (context.isNamed("A")) {
