@@ -214,7 +214,6 @@ void ProvidedPartition::prepare()
         vertexDistribution[0].push_back(i);
         _mesh->vertex(i).setGlobalIndex(i);
       }
-      PRECICE_WARN("end lambda");
       return vertexDistribution;
     }());
     _mesh->setVertexOffsets({numberOfVertices});
