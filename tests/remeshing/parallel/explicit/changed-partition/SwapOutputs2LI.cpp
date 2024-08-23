@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE(ChangedPartition)
 BOOST_AUTO_TEST_CASE(SwapOutputs2LI)
 {
   PRECICE_TEST("A"_on(2_ranks), "B"_on(2_ranks));
-  precice::tests::remesh::changepartition::runSwapOutputs(context);
+  precice::tests::remesh::parallelExplicit::changepartition::runSwapOutputs(context);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // ChangedPartition

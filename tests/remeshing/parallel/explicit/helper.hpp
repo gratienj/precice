@@ -8,7 +8,7 @@
 #include "testing/TestContext.hpp"
 #include "testing/Testing.hpp"
 
-namespace precice::tests::remesh {
+namespace precice::tests::remesh::parallelExplicit {
 
 using testing::QuickTest;
 using testing::operator""_mesh;
@@ -579,4 +579,4 @@ inline void runScatterOutputs(testing::TestContext &context)
   }
 }
 } // namespace changepartition
-} // namespace precice::tests::remesh
+} // namespace precice::tests::remesh::parallelExplicit

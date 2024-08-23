@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_SUITE(ChangedPartition)
 BOOST_AUTO_TEST_CASE(ScatterOutputs)
 {
   PRECICE_TEST("A"_on(2_ranks), "B"_on(2_ranks));
-  precice::tests::remesh::changepartition::runScatterOutputs(context);
+  precice::tests::remesh::parallelExplicit::changepartition::runScatterOutputs(context);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // ChangedPartition

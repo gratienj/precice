@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_SUITE(Noop)
 BOOST_AUTO_TEST_CASE(RemeshOutput2LI)
 {
   PRECICE_TEST("A"_on(2_ranks), "B"_on(2_ranks));
-  precice::tests::remesh::noop::runResetOutput(context);
+  precice::tests::remesh::parallelExplicit::noop::runResetOutput(context);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Noop
