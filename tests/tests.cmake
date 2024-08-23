@@ -110,10 +110,13 @@ target_sources(testprecice
     tests/remeshing/parallel/explicit/helper.hpp
     tests/remeshing/parallel/explicit/noop/RemeshBoth.cpp
     tests/remeshing/parallel/explicit/noop/RemeshBoth2LI.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshBothSerial.cpp
     tests/remeshing/parallel/explicit/noop/RemeshInput.cpp
     tests/remeshing/parallel/explicit/noop/RemeshInput2LI.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshInputSerial.cpp
     tests/remeshing/parallel/explicit/noop/RemeshOutput.cpp
     tests/remeshing/parallel/explicit/noop/RemeshOutput2LI.cpp
+    tests/remeshing/parallel/explicit/noop/RemeshOutputSerial.cpp
     tests/serial/AitkenAcceleration.cpp
     tests/serial/ImplicitCheckpointing.cpp
     tests/serial/PreconditionerBug.cpp
