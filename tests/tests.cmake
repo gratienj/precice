@@ -94,10 +94,13 @@ target_sources(testprecice
     tests/quasi-newton/serial/TestQN9.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshBoth.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshBoth2LI.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshBothSerial.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshInput.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshInput2LI.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshInputSerial.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshOutput.cpp
     tests/remeshing/parallel/explicit/changed-mapping/RemeshOutput2LI.cpp
+    tests/remeshing/parallel/explicit/changed-mapping/RemeshOutputSerial.cpp
     tests/remeshing/parallel/explicit/changed-partition/OverlapBoth.cpp
     tests/remeshing/parallel/explicit/changed-partition/OverlapBoth2LI.cpp
     tests/remeshing/parallel/explicit/changed-partition/ScatterOutputs.cpp
