@@ -120,8 +120,8 @@ void ProvidedPartition::prepare()
   PRECICE_INFO("Prepare partition for mesh {}", _mesh->getName());
   Event e("partition.prepareMesh." + _mesh->getName(), profiling::Synchronize);
 
-  //PRECICE_ASSERT(_mesh->getGlobalNumberOfVertices() <= 0, _mesh->getGlobalNumberOfVertices());
-  //PRECICE_ASSERT(_mesh->getVertexOffsets().empty(), _mesh->getVertexOffsets());
+  PRECICE_ASSERT(_mesh->getGlobalNumberOfVertices() <= 0, _mesh->getGlobalNumberOfVertices());
+  PRECICE_ASSERT(_mesh->getVertexOffsets().empty(), _mesh->getVertexOffsets());
   PRECICE_ASSERT(_mesh->getVertexDistribution().empty(), _mesh->getVertexDistribution());
 
   int numberOfVertices = _mesh->nVertices();
@@ -203,7 +203,7 @@ void ProvidedPartition::prepare()
     mesh::Mesh::VertexOffsets vertexOffsets;
     utils::IntraComm::getCommunication()->broadcast(vertexOffsets, 0);
     PRECICE_DEBUG("My vertex offsets: {}", vertexOffsets);
-    //PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
+    PRECICE_ASSERT(_mesh->getVertexOffsets().empty());
     _mesh->setVertexOffsets(std::move(vertexOffsets));
 
   } else {
@@ -251,10 +251,11 @@ void ProvidedPartition::compute()
 void ProvidedPartition::compareBoundingBoxes()
 {
   PRECICE_TRACE();
-  if (_m2ns.empty())
-    return;
 
   _mesh->clearPartitioning();
+
+  if (_m2ns.empty())
+    return;
 
   //@todo coupling mode
 
