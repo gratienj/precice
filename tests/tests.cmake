@@ -117,6 +117,31 @@ target_sources(testprecice
     tests/remeshing/parallel/explicit/noop/RemeshOutput.cpp
     tests/remeshing/parallel/explicit/noop/RemeshOutput2LI.cpp
     tests/remeshing/parallel/explicit/noop/RemeshOutputSerial.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshBoth.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshBoth2LI.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshBothSerial.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshInput.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshInput2LI.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshInputSerial.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshOutput.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshOutput2LI.cpp
+    tests/remeshing/parallel/implicit/changed-mapping/RemeshOutputSerial.cpp
+    tests/remeshing/parallel/implicit/changed-partition/OverlapBoth.cpp
+    tests/remeshing/parallel/implicit/changed-partition/OverlapBoth2LI.cpp
+    tests/remeshing/parallel/implicit/changed-partition/ScatterOutputs.cpp
+    tests/remeshing/parallel/implicit/changed-partition/ScatterOutputs2LI.cpp
+    tests/remeshing/parallel/implicit/changed-partition/SwapOutputs.cpp
+    tests/remeshing/parallel/implicit/changed-partition/SwapOutputs2LI.cpp
+    tests/remeshing/parallel/implicit/helper.hpp
+    tests/remeshing/parallel/implicit/noop/RemeshBoth.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshBoth2LI.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshBothSerial.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshInput.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshInput2LI.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshInputSerial.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshOutput.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshOutput2LI.cpp
+    tests/remeshing/parallel/implicit/noop/RemeshOutputSerial.cpp
     tests/serial/AitkenAcceleration.cpp
     tests/serial/ImplicitCheckpointing.cpp
     tests/serial/PreconditionerBug.cpp
