@@ -1,36 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <precice-configuration experimental="yes" allow-remeshing="yes">
-  <data:scalar name="D" />
-
-  <mesh name="MA" dimensions="2">
-    <use-data name="D" />
-  </mesh>
+  <data:scalar name="DB" />
+  <data:scalar name="DA" />
 
   <mesh name="MB" dimensions="2">
-    <use-data name="D" />
+    <use-data name="DA" />
+    <use-data name="DB" />
+  </mesh>
+
+  <mesh name="MA" dimensions="2">
+    <use-data name="DA" />
+    <use-data name="DB" />
   </mesh>
 
   <participant name="A">
     <provide-mesh name="MA" />
-    <write-data name="D" mesh="MA" />
+    <receive-mesh name="MB" from="B" />
+    <write-data name="DA" mesh="MA" />
+    <read-data name="DB" mesh="MA" />
+    <mapping:nearest-neighbor direction="read" from="MB" to="MA" constraint="consistent" />
   </participant>
 
   <participant name="B">
     <provide-mesh name="MB" />
     <receive-mesh name="MA" from="A" />
-    <read-data name="D" mesh="MB" />
+    <write-data name="DB" mesh="MB" />
+    <read-data name="DA" mesh="MB" />
     <mapping:nearest-neighbor direction="read" from="MA" to="MB" constraint="consistent" />
   </participant>
 
-  <m2n:sockets use-two-level-initialization="yes" connector="A" acceptor="B" />
+  <m2n:sockets
+    use-two-level-initialization="yes"
+    acceptor="B"
+    connector="A"
+    exchange-directory=".." />
 
   <coupling-scheme:parallel-implicit>
+    <participants first="A" second="B" />
+    <max-time-windows value="2" />
+    <time-window-size value="1" />
     <max-iterations value="2" />
-    <participants first="B" second="A" />
-    <max-time-windows value="10" />
-    <time-window-size value="1.0" />
-    <exchange data="D" mesh="MA" from="A" to="B" />
+    <exchange data="DA" mesh="MA" from="A" to="B" />
+    <exchange data="DB" mesh="MB" from="B" to="A" />
   </coupling-scheme:parallel-implicit>
-
-  <max-iterations value="2" />
 </precice-configuration>
