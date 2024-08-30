@@ -300,6 +300,10 @@ private:
   /// Stored in a map, since each data entry has its own time grid
   std::map<int, Eigen::VectorXd> _timeGrids;
 
+  /// @brief List of the time grid to which all the primary data used in the QN system will be interpolated to
+  /// Stored in a map, since each data entry has its own time grid
+  std::map<int, Eigen::VectorXd> _primaryTimeGrids;
+
   /// @brief Concatenation of all primary data involved in the QN system.
   Eigen::VectorXd _primaryValues;
 
