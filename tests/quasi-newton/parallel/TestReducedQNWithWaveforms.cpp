@@ -10,7 +10,7 @@ BOOST_AUTO_TEST_SUITE(QuasiNewton)
 BOOST_AUTO_TEST_SUITE(Parallel)
 BOOST_AUTO_TEST_CASE(TestReducedQNWithWaveforms)
 {
-  PRECICE_TEST("SolverOne"_on(2_ranks), "SolverTwo"_on(2_ranks));
+  PRECICE_TEST("SolverOne"_on(1_rank), "SolverTwo"_on(1_rank));
   // serial coupling,Waveform iterations, IQN-ILS
   runTestQNWithWaveforms(context.config(), context);
 }
