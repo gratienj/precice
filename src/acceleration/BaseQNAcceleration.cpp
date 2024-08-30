@@ -590,35 +590,22 @@ void BaseQNAcceleration::concatenateCouplingData(const DataMap &cplData)
   moveTimeGridToNewWindow(cplData);
 
   /// If not reduced quasi-Newton then sample the residual of data in dataIDs to the corresponding time grid in _timeGrids and concatenate everything into a long vector
-  if (!_reduced) {
-    Eigen::Index offset = 0;
+  Eigen::Index offset = 0;
+  for (int id : _primaryDataIDs) {
+    auto            waveform = cplData.at(id)->timeStepsStorage();
+    Eigen::Index    dataSize = cplData.at(id)->getSize();
+    Eigen::VectorXd timeGrid;
 
-    for (int id : _primaryDataIDs) {
-      auto            waveform = cplData.at(id)->timeStepsStorage();
-      Eigen::Index    dataSize = cplData.at(id)->getSize();
-      Eigen::VectorXd timeGrid = _timeGrids.at(id);
-
-      for (int i = 0; i < timeGrid.size(); i++) {
-
-        Eigen::VectorXd primaryData    = waveform.sample(timeGrid(i));
-        Eigen::VectorXd oldPrimaryData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
-
-        PRECICE_ASSERT(_primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
-        PRECICE_ASSERT(_oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
-
-        for (Eigen::Index i = 0; i < dataSize; i++) {
-          _primaryValues(i + offset)    = primaryData(i);
-          _oldPrimaryValues(i + offset) = oldPrimaryData(i);
-        }
-        offset += dataSize;
-      }
+    if (!_reduced) {
+      timeGrid = _timeGrids.at(id);
+    } else {
+      timeGrid = _timeGrids.at(id).tail<1>();
     }
-  } else {
-    Eigen::Index offset = 0;
-    for (auto id : _primaryDataIDs) {
-      Eigen::Index dataSize       = cplData.at(id)->getSize();
-      auto &       primaryData    = cplData.at(id)->values();
-      const auto & oldPrimaryData = cplData.at(id)->previousIteration();
+
+    for (int i = 0; i < timeGrid.size(); i++) {
+
+      Eigen::VectorXd primaryData    = waveform.sample(timeGrid(i));
+      Eigen::VectorXd oldPrimaryData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
 
       PRECICE_ASSERT(_primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
       PRECICE_ASSERT(_oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
@@ -630,8 +617,9 @@ void BaseQNAcceleration::concatenateCouplingData(const DataMap &cplData)
       offset += dataSize;
     }
   }
+
   /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
-  Eigen::Index offset = 0;
+  offset = 0;
 
   for (int id : _dataIDs) {
     auto            waveform = cplData.at(id)->timeStepsStorage();
