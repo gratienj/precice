@@ -1,5 +1,4 @@
 #include "math/Bspline.hpp"
-#include <Eigen/Sparse>
 #include "math/differences.hpp"
 #include "utils/assertion.hpp"
 
@@ -41,7 +40,6 @@ Bspline::Bspline(Eigen::VectorXd ts, const Eigen::MatrixXd &xs, int splineDegree
 
   matrixEntries.emplace_back(0, 0, 1.0);
   for (Eigen::DenseIndex i = 1; i < n - 1; ++i) {
-
     const Eigen::DenseIndex span      = Eigen::Spline<double, 1>::Span(ts[i], splineDegree, _knots);
     auto                    basisFunc = Eigen::Spline<double, 1>::BasisFunctions(ts[i], splineDegree, _knots);
 
