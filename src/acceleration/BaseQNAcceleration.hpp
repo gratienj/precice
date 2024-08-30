@@ -283,7 +283,8 @@ private:
   /// @brief Saves the time grid of each data field.
   void saveTimeGrid(const DataMap &cplData);
 
-  /// @brief ReSizes the vectors _residuals, _oldresiduals, _Xtilde, _OldXtilde such that they get the correct dimensions when using waveform iterations
+  /// @brief Initializes the vectors, matrices and preconditioner
+  /// This has to be done after the first iteration, since everything in the QN-algorithm is sampled to the timegrid of the first waveform
   void initializeVectorsAndPreconditioner(const DataMap &cplData);
 
   /**

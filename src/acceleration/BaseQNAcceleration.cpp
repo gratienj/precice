@@ -696,8 +696,6 @@ void BaseQNAcceleration::initializeVectorsAndPreconditioner(const DataMap &cplDa
       _hasNodesOnInterface = false;
     }
 
-    /// the code below needs to be adapted to waveforms!!!!!
-
     /** provide vertex offset information for all processors
      *  mesh->getVertexOffsets() provides an array that stores the number of mesh vertices on each processor
      *  This information needs to be gathered for all meshes. To get the number of respective unknowns of a specific processor
