@@ -9,7 +9,7 @@
 BOOST_AUTO_TEST_SUITE(Integration)
 BOOST_AUTO_TEST_SUITE(QuasiNewton)
 BOOST_AUTO_TEST_SUITE(Serial)
-BOOST_DATA_TEST_CASE(TestQN2, boost::unit_test::data::make({true}), includeSecondaryData)
+BOOST_DATA_TEST_CASE(TestQN2, boost::unit_test::data::make({true, false}), includeSecondaryData)
 {
   PRECICE_TEST("SolverOne"_on(1_rank), "SolverTwo"_on(1_rank));
   // parallel coupling, IQN-ILS, strict QR2 filter

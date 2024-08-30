@@ -82,6 +82,7 @@ target_sources(testprecice
     tests/quasi-newton/parallel/TestQN9.cpp
     tests/quasi-newton/parallel/TestQN9EmptyPartition.cpp
     tests/quasi-newton/parallel/TestQNWithWaveforms.cpp
+    tests/quasi-newton/parallel/TestReducedQNWithWaveforms.cpp
     tests/quasi-newton/serial/DefaultConfig.cpp
     tests/quasi-newton/serial/TestQN1.cpp
     tests/quasi-newton/serial/TestQN10.cpp
