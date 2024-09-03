@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(RemeshBothSerial)
 
   // A - Static Geometry
   if (context.isNamed("A")) {
-    QuickTest(participant, "MA"_mesh, "D"_data)
+    QuickTest(participant, "MA"_mesh, "D"_write)
         .setVertices({0.0, y, 1.0, y})
         .initialize()
         .write({0.01, 0.02})
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(RemeshBothSerial)
   }
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
-    auto qt = QuickTest(participant, "MB"_mesh, "D"_data)
+    auto qt = QuickTest(participant, "MB"_mesh, "D"_read)
                   .setVertices({0.0, y, 1.0, y})
                   .initialize()
                   .advance();

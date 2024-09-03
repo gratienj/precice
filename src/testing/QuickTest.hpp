@@ -13,12 +13,26 @@ struct QuickTest {
     std::string name;
   };
 
-  struct Data {
+  struct ReadData {
     std::string name;
   };
 
-  QuickTest(Participant &p, Mesh m, Data d)
-      : interface(p), meshName(m.name), dataName(d.name)
+  struct WriteData {
+    std::string name;
+  };
+
+  QuickTest(Participant &p, Mesh m, ReadData r)
+      : interface(p), meshName(m.name), readDataName(r.name)
+  {
+  }
+
+  QuickTest(Participant &p, Mesh m, WriteData w)
+      : interface(p), meshName(m.name), writeDataName(w.name)
+  {
+  }
+
+  QuickTest(Participant &p, Mesh m, ReadData r, WriteData w)
+      : interface(p), meshName(m.name), readDataName(r.name), writeDataName(w.name)
   {
   }
 
@@ -42,6 +56,18 @@ struct QuickTest {
     return *this;
   }
 
+  QuickTest &readCheckpoint()
+  {
+    interface.requiresReadingCheckpoint();
+    return *this;
+  }
+
+  QuickTest &writeCheckpoint()
+  {
+    interface.requiresWritingCheckpoint();
+    return *this;
+  }
+
   void finalize()
   {
     interface.finalize();
@@ -55,21 +81,22 @@ struct QuickTest {
 
   QuickTest &write(const std::vector<double> &data)
   {
-    interface.writeData(meshName, dataName, vertexIDs, data);
+    interface.writeData(meshName, writeDataName, vertexIDs, data);
     return *this;
   }
 
   std::vector<double> read()
   {
-    auto                n = vertexIDs.size() * interface.getDataDimensions(meshName, dataName);
+    auto                n = vertexIDs.size() * interface.getDataDimensions(meshName, readDataName);
     std::vector<double> result(n, -0.0);
-    interface.readData(meshName, dataName, vertexIDs, interface.getMaxTimeStepSize(), result);
+    interface.readData(meshName, readDataName, vertexIDs, interface.getMaxTimeStepSize(), result);
     return result;
   }
 
   Participant &         interface;
   std::string           meshName;
-  std::string           dataName;
+  std::string           readDataName  = "unused";
+  std::string           writeDataName = "unused";
   std::vector<VertexID> vertexIDs;
 };
 
@@ -78,7 +105,12 @@ inline QuickTest::Mesh operator""_mesh(const char *name, std::size_t)
   return {name};
 }
 
-inline QuickTest::Data operator""_data(const char *name, std::size_t)
+inline QuickTest::ReadData operator""_read(const char *name, std::size_t)
+{
+  return {name};
+}
+
+inline QuickTest::WriteData operator""_write(const char *name, std::size_t)
 {
   return {name};
 }
