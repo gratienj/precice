@@ -12,11 +12,12 @@ namespace precice::tests::remesh::parallelImplicit {
 
 using testing::QuickTest;
 using testing::operator""_mesh;
-using testing::operator""_data;
+using testing::operator""_read;
+using testing::operator""_write;
 
 namespace noop {
 
-inline void runResetInput(testing::TestContext &context)
+inline void runResetFirst(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -25,7 +26,7 @@ inline void runResetInput(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -36,7 +37,7 @@ inline void runResetInput(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -51,7 +52,7 @@ inline void runResetInput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -63,7 +64,7 @@ inline void runResetInput(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -78,7 +79,7 @@ inline void runResetInput(testing::TestContext &context)
   }
 }
 
-inline void runResetOutput(testing::TestContext &context)
+inline void runResetSecond(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -87,7 +88,7 @@ inline void runResetOutput(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -96,7 +97,7 @@ inline void runResetOutput(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -109,7 +110,7 @@ inline void runResetOutput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -122,7 +123,7 @@ inline void runResetOutput(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -146,7 +147,7 @@ inline void runResetBoth(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -157,7 +158,7 @@ inline void runResetBoth(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -172,7 +173,7 @@ inline void runResetBoth(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -186,7 +187,7 @@ inline void runResetBoth(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -206,7 +207,7 @@ inline void runResetBoth(testing::TestContext &context)
 
 namespace changemapping {
 
-inline void runResetInput(testing::TestContext &context)
+inline void runResetFirst(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -215,7 +216,7 @@ inline void runResetInput(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -226,7 +227,7 @@ inline void runResetInput(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -239,7 +240,7 @@ inline void runResetInput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -251,7 +252,7 @@ inline void runResetInput(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -266,7 +267,7 @@ inline void runResetInput(testing::TestContext &context)
   }
 }
 
-inline void runResetOutput(testing::TestContext &context)
+inline void runResetSecond(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -275,7 +276,7 @@ inline void runResetOutput(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -284,7 +285,7 @@ inline void runResetOutput(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -297,7 +298,7 @@ inline void runResetOutput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -310,7 +311,7 @@ inline void runResetOutput(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -334,7 +335,7 @@ inline void runResetBoth(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -345,7 +346,7 @@ inline void runResetBoth(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -360,7 +361,7 @@ inline void runResetBoth(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -374,7 +375,7 @@ inline void runResetBoth(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -402,7 +403,7 @@ inline void runOverlapBoth(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -413,7 +414,7 @@ inline void runOverlapBoth(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -428,7 +429,7 @@ inline void runOverlapBoth(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -442,7 +443,7 @@ inline void runOverlapBoth(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -459,7 +460,7 @@ inline void runOverlapBoth(testing::TestContext &context)
   }
 }
 
-inline void runSwapOutputs(testing::TestContext &context)
+inline void runSwapSecond(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -468,7 +469,7 @@ inline void runSwapOutputs(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -477,7 +478,7 @@ inline void runSwapOutputs(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -490,7 +491,7 @@ inline void runSwapOutputs(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -503,7 +504,7 @@ inline void runSwapOutputs(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();
@@ -519,7 +520,7 @@ inline void runSwapOutputs(testing::TestContext &context)
   }
 }
 
-inline void runScatterOutputs(testing::TestContext &context)
+inline void runScatterSecond(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -528,7 +529,7 @@ inline void runScatterOutputs(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({0.0, y, 1.0, y})
           .initialize()
           .write({0.01, 0.02})
@@ -537,7 +538,7 @@ inline void runScatterOutputs(testing::TestContext &context)
           .advance()
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_data)
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
           .setVertices({2.0, y, 3.0, y})
           .initialize()
           .write({1.01, 1.02})
@@ -550,7 +551,7 @@ inline void runScatterOutputs(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({0.0, y, 1.0, y})
                     .initialize()
                     .advance();
@@ -563,7 +564,7 @@ inline void runScatterOutputs(testing::TestContext &context)
       BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
       qt.finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_data)
+      auto qt = QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
                     .setVertices({2.0, y, 3.0, y})
                     .initialize()
                     .advance();

@@ -8,13 +8,12 @@ BOOST_AUTO_TEST_SUITE(Integration)
 BOOST_AUTO_TEST_SUITE(Remeshing)
 BOOST_AUTO_TEST_SUITE(Parallel)
 BOOST_AUTO_TEST_SUITE(Implicit)
-BOOST_AUTO_TEST_SUITE(ChangedMapping)
-BOOST_AUTO_TEST_CASE(RemeshOutputSerial)
+BOOST_AUTO_TEST_SUITE(Noop)
+BOOST_AUTO_TEST_CASE(RemeshSecondSerial)
 {
   using namespace precice::testing;
   PRECICE_TEST("A"_on(1_rank), "B"_on(1_rank));
-  constexpr double y = 0.0;
-
+  constexpr double     y = 0.0;
   precice::Participant participant{context.name, context.config(), context.rank, context.size};
 
   // A - Static Geometry
@@ -37,15 +36,15 @@ BOOST_AUTO_TEST_CASE(RemeshOutputSerial)
     std::vector<double> expected0{0.01, 0.02};
     BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
     qt.resetMesh()
-        .setVertices({0.0, y, 1.0, y, 2.0, y})
+        .setVertices({0.0, y, 1.0, y})
         .advance();
-    std::vector<double> expected1{0.11, 0.12, 0.12};
+    std::vector<double> expected1{0.11, 0.12};
     BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
     qt.finalize();
   }
 }
 
-BOOST_AUTO_TEST_SUITE_END() // ChangedMapping
+BOOST_AUTO_TEST_SUITE_END() // Noop
 BOOST_AUTO_TEST_SUITE_END() // Implicit
 BOOST_AUTO_TEST_SUITE_END() // Parallel
 BOOST_AUTO_TEST_SUITE_END() // Remeshing

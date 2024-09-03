@@ -8,14 +8,14 @@ BOOST_AUTO_TEST_SUITE(Integration)
 BOOST_AUTO_TEST_SUITE(Remeshing)
 BOOST_AUTO_TEST_SUITE(Parallel)
 BOOST_AUTO_TEST_SUITE(Implicit)
-BOOST_AUTO_TEST_SUITE(ChangedMapping)
-BOOST_AUTO_TEST_CASE(RemeshInput2LI)
+BOOST_AUTO_TEST_SUITE(Noop)
+BOOST_AUTO_TEST_CASE(RemeshSecond)
 {
   PRECICE_TEST("A"_on(2_ranks), "B"_on(2_ranks));
-  precice::tests::remesh::parallelImplicit::changemapping::runResetInput(context);
+  precice::tests::remesh::parallelImplicit::noop::runResetOutput(context);
 }
 
-BOOST_AUTO_TEST_SUITE_END() // ChangedMapping
+BOOST_AUTO_TEST_SUITE_END() // Noop
 BOOST_AUTO_TEST_SUITE_END() // Implicit
 BOOST_AUTO_TEST_SUITE_END() // Parallel
 BOOST_AUTO_TEST_SUITE_END() // Remeshing

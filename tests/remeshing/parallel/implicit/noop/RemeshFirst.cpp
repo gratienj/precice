@@ -9,10 +9,10 @@ BOOST_AUTO_TEST_SUITE(Remeshing)
 BOOST_AUTO_TEST_SUITE(Parallel)
 BOOST_AUTO_TEST_SUITE(Implicit)
 BOOST_AUTO_TEST_SUITE(Noop)
-BOOST_AUTO_TEST_CASE(RemeshOutput)
+BOOST_AUTO_TEST_CASE(RemeshFirst)
 {
   PRECICE_TEST("A"_on(2_ranks), "B"_on(2_ranks));
-  precice::tests::remesh::parallelImplicit::noop::runResetOutput(context);
+  precice::tests::remesh::parallelImplicit::noop::runResetInput(context);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Noop
