@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "testing/TestContext.hpp"
+#include "testing/Testing.hpp"
 
 namespace precice::testing {
 
@@ -91,6 +92,13 @@ struct QuickTest {
     std::vector<double> result(n, -0.0);
     interface.readData(meshName, readDataName, vertexIDs, interface.getMaxTimeStepSize(), result);
     return result;
+  }
+
+  QuickTest &expect(const std::vector<double> &expected)
+  {
+    auto data = read();
+    BOOST_TEST(data == expected, boost::test_tools::per_element());
+    return *this;
   }
 
   Participant &         interface;

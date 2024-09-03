@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include <precice/Participant.hpp>
 #include "testing/QuickTest.hpp"
@@ -52,29 +51,23 @@ inline void runResetInput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.advance();
-
-      std::vector<double> expected1{0.11, 0.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({0.0, y, 1.0, y})
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .advance()
+          .expect({0.11, 0.12})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.advance();
-
-      std::vector<double> expected1{1.11, 1.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({2.0, y, 3.0, y})
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .advance()
+          .expect({1.11, 1.12})
+          .finalize();
     }
   }
 }
@@ -110,31 +103,27 @@ inline void runResetOutput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({0.0, y, 1.0, y})
-          .advance();
-      std::vector<double> expected1{0.11, 0.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
+          .setVertices({0.0, y, 1.0, y})
+          .advance()
+          .expect({0.11, 0.12})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({2.0, y, 3.0, y})
-          .advance();
-      std::vector<double> expected1{1.11, 1.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
+          .setVertices({2.0, y, 3.0, y})
+          .advance()
+          .expect({1.11, 1.12})
+          .finalize();
     }
   }
 }
@@ -173,33 +162,27 @@ inline void runResetBoth(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({0.0, y, 1.0, y})
-          .advance();
-
-      std::vector<double> expected1{0.11, 0.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
+          .setVertices({0.0, y, 1.0, y})
+          .advance()
+          .expect({0.11, 0.12})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({2.0, y, 3.0, y})
-          .advance();
-
-      std::vector<double> expected1{1.11, 1.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
+          .setVertices({2.0, y, 3.0, y})
+          .advance()
+          .expect({1.11, 1.12})
+          .finalize();
     }
   }
 }
@@ -240,29 +223,23 @@ inline void runResetInput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.advance();
-
-      std::vector<double> expected1{0.11, 0.11};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({0.0, y, 1.0, y})
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .advance()
+          .expect({0.11, 0.11})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.advance();
-
-      std::vector<double> expected1{1.11, 1.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({2.0, y, 3.0, y})
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .advance()
+          .expect({1.11, 1.12})
+          .finalize();
     }
   }
 }
@@ -298,31 +275,27 @@ inline void runResetOutput(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({0.0, y, 1.0, y})
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
           .setVertices({1.0, y})
-          .advance();
-      std::vector<double> expected1{0.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .advance()
+          .expect({0.12})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({2.0, y, 3.0, y})
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
           .setVertices({2.0, y})
-          .advance();
-      std::vector<double> expected1{1.11};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .advance()
+          .expect({1.11})
+          .finalize();
     }
   }
 }
@@ -361,33 +334,27 @@ inline void runResetBoth(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({0.0, y, 1.0, y})
-          .advance();
-
-      std::vector<double> expected1{0.12, 0.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
+          .setVertices({0.0, y, 1.0, y})
+          .advance()
+          .expect({0.12, 0.12})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({2.0, y, 3.0, y})
-          .advance();
-
-      std::vector<double> expected1{1.11, 1.11};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
+          .setVertices({2.0, y, 3.0, y})
+          .advance()
+          .expect({1.11, 1.11})
+          .finalize();
     }
   }
 }
@@ -429,33 +396,27 @@ inline void runOverlapBoth(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({0.0, y, 1.0, y})
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
           .setVertices({0.0, y})
-          .advance();
-
-      std::vector<double> expected1{0.11};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .advance()
+          .expect({0.11})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({2.0, y, 3.0, y})
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
           .setVertices({1.0, y, 2.0, y, 3.0, y})
-          .advance();
-
-      std::vector<double> expected1{0.12, 0.13, 1.11};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .advance()
+          .expect({0.12, 0.13, 1.11})
+          .finalize();
     }
   }
 }
@@ -491,31 +452,27 @@ inline void runSwapOutputs(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
-          .setVertices({2.0, y, 3.0, y})
-          .advance();
-      std::vector<double> expected1{1.11, 1.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
-    } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
           .setVertices({0.0, y, 1.0, y})
-          .advance();
-      std::vector<double> expected1{0.11, 0.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
+          .setVertices({2.0, y, 3.0, y})
+          .advance()
+          .expect({1.11, 1.12})
+          .finalize();
+    } else {
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({2.0, y, 3.0, y})
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
+          .setVertices({0.0, y, 1.0, y})
+          .advance()
+          .expect({0.11, 0.12})
+          .finalize();
     }
   }
 }
@@ -551,31 +508,27 @@ inline void runScatterOutputs(testing::TestContext &context)
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({0.0, y, 1.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{0.01, 0.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({0.0, y, 1.0, y})
+          .initialize()
+          .advance()
+          .expect({0.01, 0.02})
+          .resetMesh()
           .setVertices({0.0, y, 2.0, y})
-          .advance();
-      std::vector<double> expected1{0.11, 1.11};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .advance()
+          .expect({0.11, 1.11})
+          .finalize();
     } else {
-      auto qt = QuickTest(p, "MB"_mesh, "D"_read)
-                    .setVertices({2.0, y, 3.0, y})
-                    .initialize()
-                    .advance();
-      std::vector<double> expected0{1.01, 1.02};
-      BOOST_TEST(qt.read() == expected0, boost::test_tools::per_element());
-      qt.resetMesh()
+      QuickTest(p, "MB"_mesh, "D"_read)
+          .setVertices({2.0, y, 3.0, y})
+          .initialize()
+          .advance()
+          .expect({1.01, 1.02})
+          .resetMesh()
           .setVertices({1.0, y, 3.0, y})
-          .advance();
-      std::vector<double> expected1{0.12, 1.12};
-      BOOST_TEST(qt.read() == expected1, boost::test_tools::per_element());
-      qt.finalize();
+          .advance()
+          .expect({0.12, 1.12})
+          .finalize();
     }
   }
 }
