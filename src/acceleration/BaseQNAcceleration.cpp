@@ -584,50 +584,33 @@ void BaseQNAcceleration::writeInfo(
 void BaseQNAcceleration::concatenateCouplingData(const DataMap &cplData)
 {
 
-  // Needs to be called every iteration, since the time window size can vary with participant first
-  moveTimeGridToNewWindow(cplData);
-
-  /// If not reduced quasi-Newton then sample the residual of data in dataIDs to the corresponding time grid in _timeGrids and concatenate everything into a long vector
-  Eigen::Index offset = 0;
-  for (int id : _primaryDataIDs) {
-    auto            waveform        = cplData.at(id)->timeStepsStorage();
-    Eigen::Index    dataSize        = cplData.at(id)->getSize();
-    Eigen::VectorXd primaryTimeGrid = _primaryTimeGrids.at(id);
-
-    for (int i = 0; i < primaryTimeGrid.size(); i++) {
-
-      Eigen::VectorXd primaryData    = waveform.sample(primaryTimeGrid(i));
-      Eigen::VectorXd oldPrimaryData = cplData.at(id)->getPreviousValuesAtTime(primaryTimeGrid(i));
-
-      PRECICE_ASSERT(_primaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
-      PRECICE_ASSERT(_oldPrimaryValues.size() >= offset + dataSize, "the primaryValues were not initialized correctly");
-
-      for (Eigen::Index i = 0; i < dataSize; i++) {
-        _primaryValues(i + offset)    = primaryData(i);
-        _oldPrimaryValues(i + offset) = oldPrimaryData(i);
-      }
-      offset += dataSize;
-    }
+  // Needs to be called in the first iteration of each time window.
+  if (_firstIteration) {
+    moveTimeGridToNewWindow(cplData);
   }
-
   /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
-  offset = 0;
+  doConcatenate(_values, _oldValues, cplData, _dataIDs, _timeGrids);
+  doConcatenate(_primaryValues, _oldPrimaryValues, cplData, _primaryDataIDs, _primaryTimeGrids);
+}
 
-  for (int id : _dataIDs) {
+void BaseQNAcceleration::doConcatenate(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids)
+{
+  Eigen::Index offset = 0;
+  for (int id : dataIDs) {
     auto            waveform = cplData.at(id)->timeStepsStorage();
     Eigen::Index    dataSize = cplData.at(id)->getSize();
-    Eigen::VectorXd timeGrid = _timeGrids.at(id);
+    Eigen::VectorXd timeGrid = timeGrids.at(id);
 
     for (int i = 0; i < timeGrid.size(); i++) {
 
-      Eigen::VectorXd data    = waveform.sample(timeGrid(i));
-      Eigen::VectorXd oldData = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
-
-      PRECICE_ASSERT(_values.size() >= offset + dataSize, "the values were not initialized correctly");
+      Eigen::VectorXd values    = waveform.sample(timeGrid(i));
+      Eigen::VectorXd oldValues = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
+      PRECICE_ASSERT(data.size() >= offset + dataSize, "the values were not initialized correctly");
+      PRECICE_ASSERT(oldData.size() >= offset + dataSize, "the values were not initialized correctly");
 
       for (Eigen::Index i = 0; i < dataSize; i++) {
-        _values(i + offset)    = data(i);
-        _oldValues(i + offset) = oldData(i);
+        data(i + offset)    = values(i);
+        oldData(i + offset) = oldValues(i);
       }
       offset += dataSize;
     }

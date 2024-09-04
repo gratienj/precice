@@ -205,7 +205,7 @@ protected:
   Eigen::MatrixXd _matrixW;
 
   /// @brief  Toggle to switch between using all of the substeps when constructing V_k or only the last time step of the time window.
-  bool _reduced = true;
+  bool _reduced;
 
   /// @brief Stores the current QR decomposition ov _matrixV, can be updated via deletion/insertion of columns
   impl::QRFactorization _qrV;
@@ -294,8 +294,12 @@ private:
    */
   virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData) = 0;
 
-  /// @brief Moves the time grid to the new time window
+  /// @brief Moves the time grid to the new time window.
+  /// This is done by translating and scaling the QN time grid such that its startpoint and end point is the same as the waveforms
   void moveTimeGridToNewWindow(const DataMap &cplData);
+
+  /// @brief Samples and concatenates the data and old data in cplData into a long vector
+  void doConcatenate(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids);
 
   /// @brief List of the time grid to which all the data will be interpolated to
   /// Stored in a map, since each data entry has its own time grid
