@@ -204,7 +204,7 @@ protected:
   /// @brief Stores x tilde deltas, where x tilde are values computed by solvers.
   Eigen::MatrixXd _matrixW;
 
-  /// @brief  Toggle to switch between using all of the substeps when constructing V_k or only the last time step of the time window.
+  /// @brief  if _reduced = false uses the full QN-WI and if _reduced = true uses rQN-WI form the paper https://onlinelibrary.wiley.com/doi/10.1002/nme.6443
   bool _reduced;
 
   /// @brief Stores the current QR decomposition ov _matrixV, can be updated via deletion/insertion of columns
@@ -274,7 +274,7 @@ protected:
   /// Writes info to the _infostream (also in parallel)
   void writeInfo(const std::string &s, bool allProcs = false);
 
-  /// Concatenates the coupling data into a long vector
+  /// Concatenates the coupling data in the waveform into the vectors _values, _oldValues, _primaryValues, _oldPrimaryValues
   void concatenateCouplingData(const DataMap &cplData) override final;
 
   int its = 0, tWindows = 0;

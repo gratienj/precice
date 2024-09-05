@@ -37,7 +37,7 @@ public:
       const DataMap &cpldata);
 
 protected:
-  /// Concatenates all coupling data involved into a single vector
+  /// @copydoc precice::acceleration::Acceleration::concatenateCouplingData
   void concatenateCouplingData(const DataMap &cplData) override final;
 
 private:
