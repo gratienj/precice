@@ -525,6 +525,21 @@ public:
    */
   bool requiresMeshConnectivityFor(::precice::string_view meshName) const;
 
+  /**
+   * @brief Removes all vertices and connectivity information from the mesh
+   *
+   * @experimental
+   *
+   * Allows calling setMeshVertex() and setMeshVertices() on the given mesh again, which has to be done before the next call to advance().
+   *
+   * @param[in] meshName the name of the mesh to reset
+   *
+   * @pre initialize() has been called
+   *
+   * @post previously returned vertex ids from setMeshVertex() and setMeshVertices() of the given mesh are invalid.
+   *
+   * @see getMeshDimensions()
+   */
   void resetMesh(::precice::string_view meshName);
 
   /**
@@ -534,7 +549,7 @@ public:
    * @param[in] position the coordinates of the vertex.
    * @returns the id of the created vertex
    *
-   * @pre initialize() has not yet been called
+   * @pre either initialize() has not yet been called or resetMesh(meshName) has been called since the last call to initialize() or advance()
    * @pre position.size() == getMeshDimensions(meshName)
    *
    * @see getMeshDimensions()
@@ -566,7 +581,7 @@ public:
    *
    * @param[out] ids The ids of the created vertices
    *
-   * @pre initialize() has not yet been called
+   * @pre either initialize() has not yet been called or resetMesh(meshName) has been called since the last call to initialize() or advance()
    * @pre \p coordinates.size() == getMeshDimensions(meshName) * ids.size()
    *
    * @see getDimensions()
