@@ -836,6 +836,7 @@ public:
    *
    * @pre every VertexID in ids is a return value of setMeshVertex or setMeshVertices
    * @pre values.size() == getDataDimensions(meshName, dataName) * ids.size()
+   * @pre resetMesh(meshName) has not been called since the last call to Participant::initialize() or Participant::advance()
    *
    * @post values contain the read data as specified in the above format.
    *

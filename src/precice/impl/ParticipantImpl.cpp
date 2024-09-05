@@ -1088,6 +1088,10 @@ void ParticipantImpl::readData(
 
   PRECICE_REQUIRE_DATA_READ(meshName, dataName);
 
+  PRECICE_CHECK(_meshLock.check(meshName),
+                "Cannot read from mesh \"{}\" after it has been reset. Please read data before calling resetMesh().",
+                meshName);
+
   // Inconsistent sizes will be handled below
   if (vertices.empty() && values.empty()) {
     return;
