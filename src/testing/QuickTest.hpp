@@ -101,6 +101,20 @@ struct QuickTest {
     return *this;
   }
 
+  QuickTest &expectReadCheckpoint()
+  {
+    BOOST_TEST(interface.requiresReadingCheckpoint());
+    BOOST_TEST(!interface.requiresWritingCheckpoint());
+    return *this;
+  }
+
+  QuickTest &expectWriteCheckpoint()
+  {
+    BOOST_TEST(!interface.requiresReadingCheckpoint());
+    BOOST_TEST(interface.requiresWritingCheckpoint());
+    return *this;
+  }
+
   QuickTest &expectCouplingCompleted()
   {
     BOOST_TEST(!interface.isCouplingOngoing());
