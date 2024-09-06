@@ -662,8 +662,10 @@ void ParticipantImpl::resetMesh(
 {
   PRECICE_EXPERIMENTAL_API();
   PRECICE_CHECK(_allowsRemeshing, "Cannot reset meshes. This feature needs to be enabled using <precice-configuration experimental=\"1\" allow-remeshing=\"1\">.");
+  PRECICE_CHECK(_state == State::Initialized, "initialize() has to be called before resetMesh().");
   PRECICE_TRACE(meshName);
   PRECICE_VALIDATE_MESH_NAME(meshName);
+  PRECICE_CHECK(_couplingScheme->isCouplingOngoing(), "Cannot remesh while subcycling or iterating. Remeshing is only allowed when the time window is completed.");
   PRECICE_CHECK(_couplingScheme->isTimeWindowComplete(), "Cannot remesh while subcycling or iterating. Remeshing is only allowed when the time window is completed.");
   impl::MeshContext &context = _accessor->usedMeshContext(meshName);
 

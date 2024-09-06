@@ -530,15 +530,18 @@ public:
    *
    * @experimental
    *
-   * Allows calling setMeshVertex() and setMeshVertices() on the given mesh again, which has to be done before the next call to advance().
+   * Allows redefining a mesh during runtime.
+   * After the call to resetMesh(), the mesh vertices need to be set with setMeshVertex() and setMeshVertices() again.
+   * Connectivity information may be set as well.
+   *
+   * Reading data from this mesh using readData() is not possible until the next call to advance().
    *
    * @param[in] meshName the name of the mesh to reset
    *
    * @pre initialize() has been called
+   * @pre isCouplingOngoing() is true
    *
    * @post previously returned vertex ids from setMeshVertex() and setMeshVertices() of the given mesh are invalid.
-   *
-   * @see getMeshDimensions()
    */
   void resetMesh(::precice::string_view meshName);
 
