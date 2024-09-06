@@ -8,12 +8,8 @@ extern "C" {
 #endif
 
 /**
- * @file
  * @brief C language bindings to main Application Programming Interface of preCICE
  *
- * The C bindings are thin wrappers around the C++ API.
- *
- * Refer to \ref precice::Participant for detailed documentation.
  */
 
 ///@name Construction and Configuration
@@ -81,17 +77,6 @@ PRECICE_API void precicec_finalize();
 
 ///@}
 
-///@name Implicit coupling
-///@{
-
-/// @copydoc precice::Participant::requiresWritingCheckpoint()
-PRECICE_API int precicec_requiresWritingCheckpoint();
-
-/// @copydoc precice::Participant::requiresReadingCheckpoint()
-PRECICE_API int precicec_requiresReadingCheckpoint();
-
-///@}
-
 ///@name Status Queries
 ///@{
 
@@ -118,6 +103,18 @@ PRECICE_API double precicec_getMaxTimeStepSize();
 
 ///@}
 
+///@name Action Methods
+///@{
+
+/// @copydoc precice::Participant::requiresInitialData()
+PRECICE_API int precicec_requiresInitialData();
+
+/// @copydoc precice::Participant::requiresWritingCheckpoint()
+PRECICE_API int precicec_requiresWritingCheckpoint();
+
+/// @copydoc precice::Participant::requiresReadingCheckpoint()
+PRECICE_API int precicec_requiresReadingCheckpoint();
+
 ///@name Mesh Access
 ///@anchor precice-mesh-access
 ///@{
@@ -129,12 +126,12 @@ PRECICE_API int precicec_requiresMeshConnectivityFor(const char *meshName);
  * @brief Creates a mesh vertex
  *
  * @param[in] meshName the name of the mesh to add the vertex to.
- * @param[in] coordinates a pointer to the coordinates of the vertex.
+ * @param[in] position a pointer to the coordinates of the vertex.
  * @returns the id of the created vertex
  */
 PRECICE_API int precicec_setMeshVertex(
     const char *  meshName,
-    const double *coordinates);
+    const double *position);
 
 /**
  * @brief Returns the number of vertices of a mesh.
@@ -149,7 +146,7 @@ PRECICE_API int precicec_getMeshVertexSize(const char *meshName);
  *
  * @param[in] meshName the name of the mesh to add the vertices to.
  * @param[in] size Number of vertices to create
- * @param[in] coordinates a pointer to the coordinates of the vertices
+ * @param[in] positions a pointer to the coordinates of the vertices
  *            The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny)
  *            The 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz)
  *
@@ -158,17 +155,17 @@ PRECICE_API int precicec_getMeshVertexSize(const char *meshName);
 PRECICE_API void precicec_setMeshVertices(
     const char *  meshName,
     int           size,
-    const double *coordinates,
+    const double *positions,
     int *         ids);
 
 /**
- * @brief Sets mesh edge from vertex IDs
+ * @brief Sets mesh edge from vertex IDs, returns edge ID.
  *
  * @param[in] meshName the name of the mesh to add the edge to
  * @param[in] firstVertexID ID of the first vertex of the edge
  * @param[in] secondVertexID ID of the second vertex of the edge
  *
- * @pre ids were added to the mesh with the name \p meshName
+ * @return the ID of the edge
  */
 PRECICE_API void precicec_setMeshEdge(
     const char *meshName,
@@ -180,14 +177,14 @@ PRECICE_API void precicec_setMeshEdge(
  *
  * @param[in] meshName the name of the mesh to add the edges to
  * @param[in] size the amount of edges to set
- * @param[in] ids an array containing 2*size vertex IDs
+ * @param[in] vertices an array containing 2*size vertex IDs
  *
- * @pre ids were added to the mesh with the name \p meshName
+ * @pre vertices were added to the mesh with the ID meshID
  */
 PRECICE_API void precicec_setMeshEdges(
     const char *meshName,
     int         size,
-    const int * ids);
+    const int * vertices);
 
 /**
  * @brief Sets a triangle from vertex IDs. Creates missing edges.
@@ -203,14 +200,14 @@ PRECICE_API void precicec_setMeshTriangle(
  *
  * @param[in] meshName the name of the mesh to add the triangles to
  * @param[in] size the amount of triangles to set
- * @param[in] ids an array containing 3*size vertex IDs
+ * @param[in] vertices an array containing 3*size vertex IDs
  *
- * @pre vertices in \p ids were added to the mesh with the name \p meshName
+ * @pre vertices were added to the mesh with the ID meshID
  */
 PRECICE_API void precicec_setMeshTriangles(
     const char *meshName,
     int         size,
-    const int * ids);
+    const int * vertices);
 
 /**
  * @brief Sets surface mesh quadrangle from vertex IDs.
@@ -233,14 +230,14 @@ PRECICE_API void precicec_setMeshQuad(
  *
  * @param[in] meshName the name of the mesh to add the quad to
  * @param[in] size the amount of quads to set
- * @param[in] ids an array containing 4*size vertex IDs
+ * @param[in] vertices an array containing 4*size vertex IDs
  *
- * @pre vertices in \ids were added to the mesh with the name \p meshName
+ * @pre vertices were added to the mesh with the ID meshID
  */
 PRECICE_API void precicec_setMeshQuads(
     const char *meshName,
     int         size,
-    const int * ids);
+    const int * vertices);
 
 /**
  * @brief Sets mesh tetrahedron from vertex IDs.
@@ -263,22 +260,35 @@ PRECICE_API void precicec_setMeshTetrahedron(
  *
  * @param[in] meshName the name of the mesh to add the tetrahedra to
  * @param[in] size the amount of tetrahedra to set
- * @param[in] ids an array containing 4*size vertex IDs
+ * @param[in] vertices an array containing 4*size vertex IDs
  *
- * @pre vertices in ids were added to the mesh with the name \p meshName
+ * @pre vertices were added to the mesh with the ID meshID
  */
 PRECICE_API void precicec_setMeshTetrahedra(
     const char *meshName,
     int         size,
-    const int * ids);
+    const int * vertices);
+
+/**
+ * @brief See precice::Participant::setMeshAccessRegion().
+ */
+PRECICE_API void precicec_setMeshAccessRegion(
+    const char *  meshName,
+    const double *boundingBox);
+
+/**
+ * @brief See precice::Participant::getMeshVertexIDsAndCoordinates().
+ */
+PRECICE_API void precicec_getMeshVertexIDsAndCoordinates(
+    const char *meshName,
+    const int   size,
+    int *       ids,
+    double *    coordinates);
 
 ///@}
 
 ///@name Data Access
 ///@{
-
-/// @copydoc precice::Participant::requiresInitialData()
-PRECICE_API int precicec_requiresInitialData();
 
 /**
  * @brief Writes vector data values given as block.
@@ -325,30 +335,20 @@ PRECICE_API void precicec_readData(
     double      relativeReadTime,
     double *    values);
 
-///@}
-
-///@name Direct mesh access
-///@{
-
 /**
- * @brief See precice::Participant::setMeshAccessRegion().
+ * @brief Returns information on the version of preCICE.
+ *
+ * Returns a semicolon-separated C-string containing:
+ *
+ * 1) the version of preCICE
+ * 2) the revision information of preCICE
+ * 3) the configuration of preCICE including MPI, PETSC, PYTHON
  */
-PRECICE_API void precicec_setMeshAccessRegion(
-    const char *  meshName,
-    const double *boundingBox);
-
-/**
- * @brief See precice::Participant::getMeshVertexIDsAndCoordinates().
- */
-PRECICE_API void precicec_getMeshVertexIDsAndCoordinates(
-    const char *meshName,
-    const int   size,
-    int *       ids,
-    double *    coordinates);
+PRECICE_API const char *precicec_getVersionInformation();
 
 ///@}
 
-/** @name Experimental Gradient Data
+/** @name Experimental Data Access
  * These API functions are \b experimental and may change in future versions.
  */
 ///@{
@@ -366,17 +366,6 @@ PRECICE_API void precicec_writeGradientData(
     const double *gradients);
 
 ///@}
-
-/**
- * @brief Returns information on the version of preCICE.
- *
- * Returns a semicolon-separated C-string containing:
- *
- * 1) the version of preCICE
- * 2) the revision information of preCICE
- * 3) the configuration of preCICE including MPI, PETSC, PYTHON
- */
-PRECICE_API const char *precicec_getVersionInformation();
 
 #ifdef __cplusplus
 }

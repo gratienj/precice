@@ -7,6 +7,7 @@
 
 #include "acceleration/impl/Preconditioner.hpp"
 #include "acceleration/impl/QRFactorization.hpp"
+#include "acceleration/impl/WaveformTimeGrids.hpp"
 #include "com/Communication.hpp"
 #include "com/SharedPointer.hpp"
 #include "cplscheme/CouplingData.hpp"
@@ -230,7 +231,8 @@ void BaseQNAcceleration::performAcceleration(
 
   // Needs to be called in the first iteration of each time window.
   if (_firstIteration) {
-    moveTimeGridToNewWindow(cplData);
+    _timeGrids.moveTimeGridToNewWindow(cplData);
+    _primaryTimeGrids.moveTimeGridToNewWindow(cplData);
   }
   /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
   ConcatenateCouplingDataWaveform(_values, _oldValues, cplData, _dataIDs, _timeGrids);
@@ -416,7 +418,8 @@ void BaseQNAcceleration::iterationsConverged(
 
   // Needs to be called in the first iteration of each time window.
   if (_firstIteration) {
-    moveTimeGridToNewWindow(cplData);
+    _timeGrids.moveTimeGridToNewWindow(cplData);
+    _primaryTimeGrids.moveTimeGridToNewWindow(cplData);
   }
   /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
   ConcatenateCouplingDataWaveform(_values, _oldValues, cplData, _dataIDs, _timeGrids);
@@ -592,18 +595,20 @@ void BaseQNAcceleration::writeInfo(
   _infostringstream << std::flush;
 }
 
-void BaseQNAcceleration::ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids)
+void BaseQNAcceleration::ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, impl::WaveformTimeGrids timeGrids)
 {
+
   Eigen::Index offset = 0;
   for (int id : dataIDs) {
     auto            waveform = cplData.at(id)->timeStepsStorage();
     Eigen::Index    dataSize = cplData.at(id)->getSize();
-    Eigen::VectorXd timeGrid = timeGrids.at(id);
+    Eigen::VectorXd timeGrid = timeGrids.getTimeGrid(id);
 
     for (int i = 0; i < timeGrid.size(); i++) {
 
       Eigen::VectorXd values    = waveform.sample(timeGrid(i));
       Eigen::VectorXd oldValues = cplData.at(id)->getPreviousValuesAtTime(timeGrid(i));
+
       PRECICE_ASSERT(data.size() >= offset + dataSize, "the values were not initialized correctly");
       PRECICE_ASSERT(oldData.size() >= offset + dataSize, "the values were not initialized correctly");
 
@@ -616,37 +621,24 @@ void BaseQNAcceleration::ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, 
   }
 }
 
-void BaseQNAcceleration::saveTimeGrid(const DataMap &cplData)
-{
-  for (auto &pair : cplData) {
-    auto            dataID   = pair.first;
-    Eigen::VectorXd timeGrid = pair.second->timeStepsStorage().getTimes();
-    _timeGrids.insert(std::pair<int, Eigen::VectorXd>(dataID, timeGrid));
-    if (_reduced) {
-      _primaryTimeGrids.insert(std::pair<int, Eigen::VectorXd>(dataID, timeGrid.tail<1>()));
-    } else {
-      _primaryTimeGrids.insert(std::pair<int, Eigen::VectorXd>(dataID, timeGrid));
-    }
-  }
-}
-
 void BaseQNAcceleration::initializeVectorsAndPreconditioner(const DataMap &cplData)
 {
 
   // Saves the time grid of each waveform in the data field to be used in the QN method
-  saveTimeGrid(cplData);
+  _timeGrids.setTimeGrid(cplData, _dataIDs, false);
+  _primaryTimeGrids.setTimeGrid(cplData, _primaryDataIDs, _reduced);
 
   size_t dataSize = 0;
   for (auto id : _dataIDs) {
-    dataSize += _timeGrids.at(id).size() * cplData.at(id)->getSize();
+    dataSize += _timeGrids.getTimeGrid(id).size() * cplData.at(id)->getSize();
   }
 
   size_t              primaryDataSize = 0;
   std::vector<size_t> subVectorSizes; // needed for preconditioner
 
   for (auto id : _primaryDataIDs) {
-    primaryDataSize += _primaryTimeGrids.at(id).size() * cplData.at(id)->getSize();
-    subVectorSizes.push_back(_primaryTimeGrids.at(id).size() * cplData.at(id)->getSize());
+    primaryDataSize += _primaryTimeGrids.getTimeGrid(id).size() * cplData.at(id)->getSize();
+    subVectorSizes.push_back(_primaryTimeGrids.getTimeGrid(id).size() * cplData.at(id)->getSize());
   }
 
   PRECICE_ASSERT(_values.size() == 0, "Values already initialized, something is wrong with the QN method");
@@ -694,10 +686,10 @@ void BaseQNAcceleration::initializeVectorsAndPreconditioner(const DataMap &cplDa
       for (auto &elem : _dataIDs) {
         const auto &offsets = cplData.at(elem)->getVertexOffsets();
 
-        accumulatedNumberOfUnknowns += offsets[i] * cplData.at(elem)->getDimensions() * _timeGrids.at(elem).size();
+        accumulatedNumberOfUnknowns += offsets[i] * cplData.at(elem)->getDimensions() * _timeGrids.getTimeGrid(elem).size();
 
         if (utils::contained(elem, _primaryDataIDs)) {
-          accumulatedNumberOfPrimaryUnknowns += offsets[i] * cplData.at(elem)->getDimensions() * _primaryTimeGrids.at(elem).size();
+          accumulatedNumberOfPrimaryUnknowns += offsets[i] * cplData.at(elem)->getDimensions() * _primaryTimeGrids.getTimeGrid(elem).size();
         }
       }
       _dimOffsets[i + 1]        = accumulatedNumberOfUnknowns;
@@ -738,7 +730,7 @@ void BaseQNAcceleration::applyQNValuesToCouplingData(
     auto & couplingData = *cplData.at(id);
     size_t dataSize     = couplingData.getSize();
 
-    Eigen::VectorXd timeGrid = _timeGrids.at(id);
+    Eigen::VectorXd timeGrid = _timeGrids.getTimeGrid(id);
     couplingData.timeStepsStorage().clear();
 
     for (int i = 0; i < timeGrid.size(); i++) {
@@ -752,31 +744,6 @@ void BaseQNAcceleration::applyQNValuesToCouplingData(
       couplingData.sample().values = temp;
       couplingData.setSampleAtTime(timeGrid(i), couplingData.sample());
     }
-  }
-}
-
-void BaseQNAcceleration::moveTimeGridToNewWindow(const DataMap &cplData)
-{
-
-  for (auto &pair : cplData) {
-    auto            dataID      = pair.first;
-    Eigen::VectorXd newtimeGrid = pair.second->timeStepsStorage().getTimes();
-    double          newTimesMin = newtimeGrid(0);
-    double          newTimesMax = newtimeGrid(newtimeGrid.size() - 1);
-
-    Eigen::VectorXd timeGrid        = _timeGrids.at(dataID);
-    Eigen::VectorXd primaryTimeGrid = _primaryTimeGrids.at(dataID);
-
-    double oldTimesMin = timeGrid(0);
-    double oldTimesMax = timeGrid(timeGrid.size() - 1);
-
-    // transform the time to the new time grid
-    auto transformNewTime = [oldTimesMin = oldTimesMin, oldTimesMax = oldTimesMax, newTimesMin = newTimesMin, newTimesMax = newTimesMax](double t) -> double { return (t - oldTimesMin) / (oldTimesMax - oldTimesMin) * (newTimesMax - newTimesMin) + newTimesMin; };
-    timeGrid              = timeGrid.unaryExpr(transformNewTime);
-    _timeGrids.at(dataID) = timeGrid;
-
-    primaryTimeGrid              = primaryTimeGrid.unaryExpr(transformNewTime);
-    _primaryTimeGrids.at(dataID) = primaryTimeGrid;
   }
 }
 

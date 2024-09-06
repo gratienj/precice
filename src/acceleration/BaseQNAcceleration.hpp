@@ -11,6 +11,7 @@
 #include "acceleration/Acceleration.hpp"
 #include "acceleration/impl/QRFactorization.hpp"
 #include "acceleration/impl/SharedPointer.hpp"
+#include "acceleration/impl/WaveformTimeGrids.hpp"
 #include "logging/Logger.hpp"
 
 /* ****************************************************************************
@@ -277,9 +278,6 @@ protected:
   int its = 0, tWindows = 0;
 
 private:
-  /// @brief Saves the time grid of each data field.
-  void saveTimeGrid(const DataMap &cplData);
-
   /// @brief Initializes the vectors, matrices and preconditioner
   /// This has to be done after the first iteration, since everything in the QN-algorithm is sampled to the timegrid of the first waveform
   void initializeVectorsAndPreconditioner(const DataMap &cplData);
@@ -291,20 +289,16 @@ private:
    */
   virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData) = 0;
 
-  /// @brief Moves the time grid to the new time window.
-  /// This is done by translating and scaling the QN time grid such that its startpoint and end point is the same as the waveforms
-  void moveTimeGridToNewWindow(const DataMap &cplData);
-
   /// @brief Samples and concatenates the data and old data in cplData into a long vector
-  void ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids);
+  void ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, impl::WaveformTimeGrids timeGrids);
 
   /// @brief List of the time grid to which all the data will be interpolated to
   /// Stored in a map, since each data entry has its own time grid
-  std::map<int, Eigen::VectorXd> _timeGrids;
+  impl::WaveformTimeGrids _timeGrids;
 
   /// @brief List of the time grid to which all the primary data used in the QN system will be interpolated to
   /// Stored in a map, since each data entry has its own time grid
-  std::map<int, Eigen::VectorXd> _primaryTimeGrids;
+  impl::WaveformTimeGrids _primaryTimeGrids;
 
   /// @brief Concatenation of all primary data involved in the QN system.
   Eigen::VectorXd _primaryValues;
