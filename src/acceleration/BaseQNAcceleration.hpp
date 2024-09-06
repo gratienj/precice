@@ -274,9 +274,6 @@ protected:
   /// Writes info to the _infostream (also in parallel)
   void writeInfo(const std::string &s, bool allProcs = false);
 
-  /// Concatenates the coupling data in the waveform into the vectors _values, _oldValues, _primaryValues, _oldPrimaryValues
-  void concatenateCouplingData(const DataMap &cplData) override final;
-
   int its = 0, tWindows = 0;
 
 private:
@@ -299,7 +296,7 @@ private:
   void moveTimeGridToNewWindow(const DataMap &cplData);
 
   /// @brief Samples and concatenates the data and old data in cplData into a long vector
-  void doConcatenate(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids);
+  void ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids);
 
   /// @brief List of the time grid to which all the data will be interpolated to
   /// Stored in a map, since each data entry has its own time grid

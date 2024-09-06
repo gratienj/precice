@@ -30,11 +30,6 @@ public:
   }
 
 protected:
-  void concatenateCouplingData(const DataMap &cplData) override final
-  {
-    // function not needed in ConstantRelaxationAcceleration
-  }
-
 private:
   logging::Logger _log{"acceleration::ConstantRelaxationAcceleration"};
 

@@ -228,8 +228,13 @@ void BaseQNAcceleration::performAcceleration(
   PRECICE_ASSERT(_oldPrimaryValues.size() == _oldPrimaryXTilde.size(), _oldPrimaryValues.size(), _oldPrimaryXTilde.size());
   PRECICE_ASSERT(_primaryResiduals.size() == _oldPrimaryXTilde.size(), _primaryResiduals.size(), _oldPrimaryXTilde.size());
 
-  // assume data structures associated with the LS system can be updated easily.
-  concatenateCouplingData(cplData);
+  // Needs to be called in the first iteration of each time window.
+  if (_firstIteration) {
+    moveTimeGridToNewWindow(cplData);
+  }
+  /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
+  ConcatenateCouplingDataWaveform(_values, _oldValues, cplData, _dataIDs, _timeGrids);
+  ConcatenateCouplingDataWaveform(_primaryValues, _oldPrimaryValues, cplData, _primaryDataIDs, _primaryTimeGrids);
 
   /** update the difference matrices V,W  includes:
    * scaling of values
@@ -409,7 +414,13 @@ void BaseQNAcceleration::iterationsConverged(
     initializeVectorsAndPreconditioner(cplData);
   }
 
-  concatenateCouplingData(cplData);
+  // Needs to be called in the first iteration of each time window.
+  if (_firstIteration) {
+    moveTimeGridToNewWindow(cplData);
+  }
+  /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
+  ConcatenateCouplingDataWaveform(_values, _oldValues, cplData, _dataIDs, _timeGrids);
+  ConcatenateCouplingDataWaveform(_primaryValues, _oldPrimaryValues, cplData, _primaryDataIDs, _primaryTimeGrids);
   updateDifferenceMatrices(cplData);
 
   if (not _matrixCols.empty() && _matrixCols.front() == 0) { // Did only one iteration
@@ -581,19 +592,7 @@ void BaseQNAcceleration::writeInfo(
   _infostringstream << std::flush;
 }
 
-void BaseQNAcceleration::concatenateCouplingData(const DataMap &cplData)
-{
-
-  // Needs to be called in the first iteration of each time window.
-  if (_firstIteration) {
-    moveTimeGridToNewWindow(cplData);
-  }
-  /// Sample all the data to the corresponding time grid in _timeGrids and concatenate everything into a long vector
-  doConcatenate(_values, _oldValues, cplData, _dataIDs, _timeGrids);
-  doConcatenate(_primaryValues, _oldPrimaryValues, cplData, _primaryDataIDs, _primaryTimeGrids);
-}
-
-void BaseQNAcceleration::doConcatenate(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids)
+void BaseQNAcceleration::ConcatenateCouplingDataWaveform(Eigen::VectorXd &data, Eigen::VectorXd &oldData, const DataMap &cplData, std::vector<int> dataIDs, std::map<int, Eigen::VectorXd> timeGrids)
 {
   Eigen::Index offset = 0;
   for (int id : dataIDs) {

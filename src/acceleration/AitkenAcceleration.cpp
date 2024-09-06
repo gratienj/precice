@@ -68,7 +68,7 @@ void AitkenAcceleration::performAcceleration(
   // Compute aitken relaxation factor
   PRECICE_ASSERT(utils::contained(*_primaryDataIDs.begin(), cplData));
 
-  concatenateCouplingData(cplData);
+  concatenateCouplingData(cplData, _primaryDataIDs, _values, _oldValues);
 
   // Compute current residual = values - oldValues
   Eigen::VectorXd residuals = _values - _oldValues;
@@ -119,18 +119,19 @@ void AitkenAcceleration::iterationsConverged(
   _oldResiduals = Eigen::VectorXd::Constant(_oldResiduals.size(), std::numeric_limits<double>::max());
 }
 
-void AitkenAcceleration::concatenateCouplingData(const DataMap &cplData)
+void AitkenAcceleration::concatenateCouplingData(
+    const DataMap &cplData, const std::vector<DataID> &dataIDs, Eigen::VectorXd &targetValues, Eigen::VectorXd &targetOldValues) const
 {
   Eigen::Index offset = 0;
-  for (auto id : _primaryDataIDs) {
+  for (auto id : dataIDs) {
     Eigen::Index size      = cplData.at(id)->values().size();
     auto &       values    = cplData.at(id)->values();
     const auto & oldValues = cplData.at(id)->previousIteration();
-    PRECICE_ASSERT(_values.size() >= offset + size, "Target vector was not initialized.", _values.size(), offset + size);
-    PRECICE_ASSERT(_oldValues.size() >= offset + size, "Target vector was not initialized.");
+    PRECICE_ASSERT(targetValues.size() >= offset + size, "Target vector was not initialized.", targetValues.size(), offset + size);
+    PRECICE_ASSERT(targetOldValues.size() >= offset + size, "Target vector was not initialized.");
     for (Eigen::Index i = 0; i < size; i++) {
-      _values(i + offset)    = values(i);
-      _oldValues(i + offset) = oldValues(i);
+      targetValues(i + offset)    = values(i);
+      targetOldValues(i + offset) = oldValues(i);
     }
     offset += size;
   }
