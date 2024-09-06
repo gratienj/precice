@@ -101,6 +101,12 @@ struct QuickTest {
     return *this;
   }
 
+  QuickTest &expectCouplingCompleted()
+  {
+    BOOST_TEST(!interface.isCouplingOngoing());
+    return *this;
+  }
+
   Participant &         interface;
   std::string           meshName;
   std::string           readDataName  = "unused";
