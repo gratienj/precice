@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_SUITE(ChangedMapping)
 BOOST_AUTO_TEST_CASE(RemeshSecond2LI)
 {
   PRECICE_TEST("A"_on(2_ranks), "B"_on(2_ranks));
-  precice::tests::remesh::parallelImplicit::changemapping::runResetOutput(context);
+  precice::tests::remesh::parallelImplicit::changemapping::runResetSecond(context);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // ChangedMapping
