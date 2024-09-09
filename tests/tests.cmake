@@ -130,8 +130,12 @@ target_sources(testprecice
     tests/remeshing/parallel/implicit/changed-mapping/RemeshSecondSerial.cpp
     tests/remeshing/parallel/implicit/changed-partition/OverlapBoth.cpp
     tests/remeshing/parallel/implicit/changed-partition/OverlapBoth2LI.cpp
+    tests/remeshing/parallel/implicit/changed-partition/ScatterFirst.cpp
+    tests/remeshing/parallel/implicit/changed-partition/ScatterFirst2LI.cpp
     tests/remeshing/parallel/implicit/changed-partition/ScatterSecond.cpp
     tests/remeshing/parallel/implicit/changed-partition/ScatterSecond2LI.cpp
+    tests/remeshing/parallel/implicit/changed-partition/SwapFirst.cpp
+    tests/remeshing/parallel/implicit/changed-partition/SwapFirst2LI.cpp
     tests/remeshing/parallel/implicit/changed-partition/SwapSecond.cpp
     tests/remeshing/parallel/implicit/changed-partition/SwapSecond2LI.cpp
     tests/remeshing/parallel/implicit/helper.hpp

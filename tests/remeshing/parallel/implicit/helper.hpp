@@ -480,84 +480,141 @@ inline void runResetBoth(testing::TestContext &context)
 
 namespace changepartition {
 
+/// Changes partitioning from 12|34 to 1|234 and 123|4
 inline void runOverlapBoth(testing::TestContext &context)
 {
   constexpr double y = 0.0;
-  Participant      p{context.name, context.config(), context.rank, context.size};
+
+  Participant p{context.name, context.config(), context.rank, context.size};
 
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_write)
-          .setVertices({0.0, y, 1.0, y})
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
+          .setVertices({1.0, y, 2.0, y})
           .initialize()
           .expectWriteCheckpoint()
-          .write({0.01, 0.02})
-          .expect({0.00, 0.00})
+          .expect({00.00, 00.00})
+          .write({01.00, 02.00})
           .advance()
-          .expectWriteCheckpoint()
-          .resetMesh()
-          .setVertices({0.0, y, 1.0, y, 2.0, y})
-          .write({0.11, 0.12, 0.13})
-          .expect({0.00, 0.00})
+
+          .expectReadCheckpoint()
+          .expect({01.00, 02.00})
+          .write({01.01, 02.01})
           .advance()
+
           .expectWriteCheckpoint()
-          .expect({0.00, 0.00})
-          .finalize();
-    } else {
-      QuickTest(p, "MA"_mesh, "D"_write)
-          .setVertices({2.0, y, 3.0, y})
-          .initialize()
-          .expectWriteCheckpoint()
-          .write({1.01, 1.02})
-          .expect({0.00, 0.00})
-          .advance()
-          .expectWriteCheckpoint()
-          .resetMesh()
-          .setVertices({3.0, y})
-          .write({1.11})
-          .expect({0.00, 0.00})
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({0.00, 0.00})
-          .finalize();
-    }
-  }
-  // B - Adaptive Geometry
-  if (context.isNamed("B")) {
-    if (context.isPrimary()) {
-      QuickTest(p, "MB"_mesh, "D"_read)
-          .setVertices({0.0, y, 1.0, y})
-          .initialize()
-          .expectWriteCheckpoint()
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({0.01, 0.02})
-          .resetMesh()
-          .setVertices({0.0, y})
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({0.11})
-          .finalize();
-    } else {
-      QuickTest(p, "MB"_mesh, "D"_read)
-          .setVertices({2.0, y, 3.0, y})
-          .initialize()
-          .expectWriteCheckpoint()
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({1.01, 1.02})
+          .expect({01.01, 02.01})
           .resetMesh()
           .setVertices({1.0, y, 2.0, y, 3.0, y})
+          .write({01.10, 02.10, 03.10})
           .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.10, 12.10, 13.10})
+          .write({01.11, 02.11, 03.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({01.11, 12.11, 13.11})
+          .finalize();
+    } else {
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
+          .setVertices({3.0, y, 4.0, y})
+          .initialize()
           .expectWriteCheckpoint()
-          .expect({0.12, 0.13, 1.11})
+          .expect({00.00, 00.00})
+          .write({13.00, 14.00})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({13.00, 14.00})
+          .write({13.01, 14.01})
+          .advance()
+
+          .expectWriteCheckpoint()
+          .expect({13.01, 14.01})
+          .resetMesh()
+          .setVertices({4.0, y})
+          .write({14.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({14.10})
+          .write({14.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({14.11})
+          .finalize();
+    }
+  }
+  // B - Adaptive Geometry
+  if (context.isNamed("B")) {
+    if (context.isPrimary()) {
+      QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
+          .setVertices({1.0, y, 2.0, y})
+          .initialize()
+          .expectWriteCheckpoint()
+          .expect({00.00, 00.00})
+          .write({01.00, 02.00})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.00, 02.00})
+          .write({01.01, 02.01})
+          .advance()
+
+          .expectWriteCheckpoint()
+          .expect({01.01, 02.01})
+          .resetMesh()
+          .setVertices({1.0, y})
+          .write({01.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.10})
+          .write({01.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({01.11})
+          .finalize();
+    } else {
+      QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
+          .setVertices({3.0, y, 4.0, y})
+          .initialize()
+          .expectWriteCheckpoint()
+          .expect({00.00, 00.00})
+          .write({13.00, 14.00})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({13.00, 14.00})
+          .write({13.01, 14.01})
+          .advance()
+
+          .expectWriteCheckpoint()
+          .expect({13.01, 14.01})
+          .resetMesh()
+          .setVertices({2.0, y, 3.0, y, 4.0, y})
+          .write({12.10, 13.10, 14.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({02.10, 03.10, 14.10})
+          .write({12.11, 13.11, 14.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({02.11, 03.11, 14.11})
           .finalize();
     }
   }
 }
 
-inline void runSwapSecond(testing::TestContext &context)
+/// Changes partitioning of A from 12|34 to 34|12
+inline void runSwapA(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -566,72 +623,127 @@ inline void runSwapSecond(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_write)
-          .setVertices({0.0, y, 1.0, y})
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
+          .setVertices({1.0, y, 2.0, y})
           .initialize()
           .expectWriteCheckpoint()
-          .write({0.01, 0.02})
-          .expect({0.00, 0.00})
+          .expect({00.00, 00.00})
+          .write({01.00, 02.00})
           .advance()
-          .expectWriteCheckpoint()
-          .write({0.11, 0.12})
-          .expect({0.00, 0.00})
+
+          .expectReadCheckpoint()
+          .expect({01.00, 02.00})
+          .write({01.01, 02.01})
           .advance()
+
           .expectWriteCheckpoint()
-          .expect({0.00, 0.00})
+          .expect({01.01, 02.01})
+          .resetMesh()
+          .setVertices({3.0, y, 4.0, y})
+          .write({03.10, 04.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({13.10, 14.10})
+          .write({03.11, 04.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({13.11, 14.11})
           .finalize();
     } else {
-      QuickTest(p, "MA"_mesh, "D"_write)
-          .setVertices({2.0, y, 3.0, y})
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
+          .setVertices({3.0, y, 4.0, y})
           .initialize()
           .expectWriteCheckpoint()
-          .write({1.01, 1.02})
-          .expect({0.00, 0.00})
+          .expect({00.00, 00.00})
+          .write({13.00, 14.00})
           .advance()
-          .expectWriteCheckpoint()
-          .write({1.11, 1.12})
-          .expect({0.00, 0.00})
+
+          .expectReadCheckpoint()
+          .expect({13.00, 14.00})
+          .write({13.01, 14.01})
           .advance()
+
           .expectWriteCheckpoint()
-          .expect({0.00, 0.00})
+          .expect({13.01, 14.01})
+          .resetMesh()
+          .setVertices({1.0, y, 2.0, y})
+          .write({11.10, 12.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.10, 02.10})
+          .write({11.11, 12.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({01.11, 02.11})
           .finalize();
     }
   }
   // B - Adaptive Geometry
   if (context.isNamed("B")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MB"_mesh, "D"_read)
-          .setVertices({0.0, y, 1.0, y})
+      QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
+          .setVertices({1.0, y, 2.0, y})
           .initialize()
           .expectWriteCheckpoint()
+          .expect({00.00, 00.00})
+          .write({01.00, 02.00})
           .advance()
-          .expectWriteCheckpoint()
-          .expect({0.01, 0.02})
-          .resetMesh()
-          .setVertices({2.0, y, 3.0, y})
+
+          .expectReadCheckpoint()
+          .expect({01.00, 02.00})
+          .write({01.01, 02.01})
           .advance()
+
           .expectWriteCheckpoint()
-          .expect({1.11, 1.12})
+          .expect({01.01, 02.01})
+          .write({01.10, 02.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({11.10, 12.10})
+          .write({01.11, 02.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({11.11, 12.11})
           .finalize();
     } else {
-      QuickTest(p, "MB"_mesh, "D"_read)
-          .setVertices({2.0, y, 3.0, y})
+      QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
+          .setVertices({3.0, y, 4.0, y})
           .initialize()
           .expectWriteCheckpoint()
+          .expect({00.00, 00.00})
+          .write({13.00, 14.00})
           .advance()
-          .expectWriteCheckpoint()
-          .expect({1.01, 1.02})
-          .resetMesh()
-          .setVertices({0.0, y, 1.0, y})
+
+          .expectReadCheckpoint()
+          .expect({13.00, 14.00})
+          .write({13.01, 14.01})
           .advance()
+
           .expectWriteCheckpoint()
-          .expect({0.11, 0.12})
+          .expect({13.01, 14.01})
+          .write({13.10, 14.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({03.10, 04.10})
+          .write({13.11, 14.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({03.11, 04.11})
           .finalize();
     }
   }
 }
 
-inline void runScatterSecond(testing::TestContext &context)
+/// Changes partitioning of A from 12|34 to 13|24
+inline void runScatterA(testing::TestContext &context)
 {
   constexpr double y = 0.0;
 
@@ -640,69 +752,124 @@ inline void runScatterSecond(testing::TestContext &context)
   // A - Static Geometry
   if (context.isNamed("A")) {
     if (context.isPrimary()) {
-      QuickTest(p, "MA"_mesh, "D"_write)
-          .setVertices({0.0, y, 1.0, y})
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
+          .setVertices({1.0, y, 2.0, y})
           .initialize()
           .expectWriteCheckpoint()
-          .write({0.01, 0.02})
-          .expect({0.00, 0.00})
+          .expect({00.00, 00.00})
+          .write({01.00, 02.00})
           .advance()
-          .expectWriteCheckpoint()
-          .write({0.11, 0.12})
-          .expect({0.00, 0.00})
+
+          .expectReadCheckpoint()
+          .expect({01.00, 02.00})
+          .write({01.01, 02.01})
           .advance()
+
           .expectWriteCheckpoint()
-          .expect({0.00, 0.00})
-          .finalize();
-    } else {
-      QuickTest(p, "MA"_mesh, "D"_write)
-          .setVertices({2.0, y, 3.0, y})
-          .initialize()
-          .expectWriteCheckpoint()
-          .write({1.01, 1.02})
-          .expect({0.00, 0.00})
-          .advance()
-          .expectWriteCheckpoint()
-          .write({1.11, 1.12})
-          .expect({0.00, 0.00})
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({0.00, 0.00})
-          .finalize();
-    }
-  }
-  // B - Adaptive Geometry
-  if (context.isNamed("B")) {
-    if (context.isPrimary()) {
-      QuickTest(p, "MB"_mesh, "D"_read)
-          .setVertices({0.0, y, 1.0, y})
-          .initialize()
-          .expectWriteCheckpoint()
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({0.01, 0.02})
-          .resetMesh()
-          .setVertices({0.0, y, 2.0, y})
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({0.11, 1.11})
-          .finalize();
-    } else {
-      QuickTest(p, "MB"_mesh, "D"_read)
-          .setVertices({2.0, y, 3.0, y})
-          .initialize()
-          .expectWriteCheckpoint()
-          .advance()
-          .expectWriteCheckpoint()
-          .expect({1.01, 1.02})
+          .expect({01.01, 02.01})
           .resetMesh()
           .setVertices({1.0, y, 3.0, y})
+          .write({01.10, 03.10})
           .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.10, 13.10})
+          .write({01.11, 03.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({01.11, 13.11})
+          .finalize();
+    } else {
+      QuickTest(p, "MA"_mesh, "DB"_read, "DA"_write)
+          .setVertices({3.0, y, 4.0, y})
+          .initialize()
           .expectWriteCheckpoint()
-          .expect({0.12, 1.12})
+          .expect({00.00, 00.00})
+          .write({13.00, 14.00})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({13.00, 14.00})
+          .write({13.01, 14.01})
+          .advance()
+
+          .expectWriteCheckpoint()
+          .expect({13.01, 14.01})
+          .resetMesh()
+          .setVertices({2.0, y, 4.0, y})
+          .write({12.10, 14.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({02.10, 14.10})
+          .write({12.11, 14.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({02.11, 14.11})
+          .finalize();
+    }
+  }
+  // B - Adaptive Geometry
+  if (context.isNamed("B")) {
+    if (context.isPrimary()) {
+      QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
+          .setVertices({1.0, y, 2.0, y})
+          .initialize()
+          .expectWriteCheckpoint()
+          .expect({00.00, 00.00})
+          .write({01.00, 02.00})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.00, 02.00})
+          .write({01.01, 02.01})
+          .advance()
+
+          .expectWriteCheckpoint()
+          .expect({01.01, 02.01})
+          .write({01.10, 02.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({01.10, 12.10})
+          .write({01.11, 02.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({01.11, 12.11})
+          .finalize();
+    } else {
+      QuickTest(p, "MB"_mesh, "DA"_read, "DB"_write)
+          .setVertices({3.0, y, 4.0, y})
+          .initialize()
+          .expectWriteCheckpoint()
+          .expect({00.00, 00.00})
+          .write({13.00, 14.00})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({13.00, 14.00})
+          .write({13.01, 14.01})
+          .advance()
+
+          .expectWriteCheckpoint()
+          .expect({13.01, 14.01})
+          .write({13.10, 14.10})
+          .advance()
+
+          .expectReadCheckpoint()
+          .expect({03.10, 14.10})
+          .write({13.11, 14.11})
+          .advance()
+
+          .expectCouplingCompleted()
+          .expect({03.11, 14.11})
           .finalize();
     }
   }
 }
+
 } // namespace changepartition
 } // namespace precice::tests::remesh::parallelImplicit
