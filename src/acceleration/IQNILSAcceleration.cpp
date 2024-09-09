@@ -32,9 +32,10 @@ IQNILSAcceleration::IQNILSAcceleration(
     int                     filter,
     double                  singularityLimit,
     std::vector<int>        dataIDs,
-    impl::PtrPreconditioner preconditioner)
+    impl::PtrPreconditioner preconditioner,
+    bool                    reduced)
     : BaseQNAcceleration(initialRelaxation, forceInitialRelaxation, maxIterationsUsed, pastTimeWindowsReused,
-                         filter, singularityLimit, std::move(dataIDs), std::move(preconditioner))
+                         filter, singularityLimit, std::move(dataIDs), std::move(preconditioner), reduced)
 {
 }
 
@@ -52,7 +53,7 @@ void IQNILSAcceleration::updateDifferenceMatrices(
   BaseQNAcceleration::updateDifferenceMatrices(cplData);
 }
 
-void IQNILSAcceleration::computeQNUpdate(const DataMap &cplData, Eigen::VectorXd &xUpdate)
+void IQNILSAcceleration::computeQNUpdate(Eigen::VectorXd &xUpdate)
 {
   PRECICE_TRACE();
   PRECICE_DEBUG("   Compute Newton factors");

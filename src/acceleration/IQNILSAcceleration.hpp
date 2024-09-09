@@ -33,7 +33,8 @@ public:
       int                     filter,
       double                  singularityLimit,
       std::vector<int>        dataIDs,
-      impl::PtrPreconditioner preconditioner);
+      impl::PtrPreconditioner preconditioner,
+      bool                    reduced = true);
 
   virtual ~IQNILSAcceleration() {}
 
@@ -56,10 +57,13 @@ private:
   virtual void updateDifferenceMatrices(const DataMap &cplData);
 
   /// computes the IQN-ILS update using QR decomposition
-  virtual void computeQNUpdate(const DataMap &cplData, Eigen::VectorXd &xUpdate);
+  virtual void computeQNUpdate(Eigen::VectorXd &xUpdate);
 
   /// Removes one iteration from V,W matrices and adapts _matrixCols.
   virtual void removeMatrixColumn(int columnIndex);
+
+  /// @brief Initializes specialised matrix structures for the IQNILS acceleration
+  virtual void specializedInitializeVectorsAndPreconditioner(const DataMap &cplData){};
 };
 } // namespace acceleration
 } // namespace precice

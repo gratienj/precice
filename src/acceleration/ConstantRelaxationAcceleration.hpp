@@ -29,6 +29,7 @@ public:
   {
   }
 
+protected:
 private:
   logging::Logger _log{"acceleration::ConstantRelaxationAcceleration"};
 
