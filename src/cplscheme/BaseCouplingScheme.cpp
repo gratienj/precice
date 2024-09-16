@@ -303,17 +303,13 @@ void BaseCouplingScheme::reinitialize()
   PRECICE_ASSERT(isInitialized());
 
   if (isImplicitCouplingScheme()) {
-    //storeIteration();
     if (not doesFirstStep()) {
-      // reserve memory and initialize data with zero
       if (_acceleration) {
         _acceleration->initialize(getAccelerationData());
       }
     }
     initializeTXTWriters();
   }
-
-  // exchangeInitialData();
 }
 
 bool BaseCouplingScheme::sendsInitializedData() const
