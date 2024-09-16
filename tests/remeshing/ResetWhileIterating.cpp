@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(ResetWhileIterating)
   BOOST_CHECK_THROW(qt.resetMesh(), ::precice::Error);
   qt.readCheckpoint()
       .advance()
-      // TW 1 It
+      // TW 1 It 2
       .writeCheckpoint()
       .expect({0.00, 0.00});
   BOOST_CHECK_THROW(qt.resetMesh(), ::precice::Error);
