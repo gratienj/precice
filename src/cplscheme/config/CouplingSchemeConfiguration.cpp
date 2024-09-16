@@ -321,7 +321,7 @@ void CouplingSchemeConfiguration::xmlEndTagCallback(
   PRECICE_TRACE(tag.getFullName());
   if (tag.getNamespace() == TAG) {
     if (_config.type == VALUE_SERIAL_EXPLICIT) {
-      PRECICE_CHECK(!_allowRemeshing, "Remeshing is currently incompatible with serial coupling schemes. Try using a parallel or multi couplingscheme instead.");
+      PRECICE_CHECK(!_allowRemeshing, "Remeshing is currently incompatible with serial coupling schemes. Try using a parallel or a multi coupling scheme instead.");
       std::string       accessor(_config.participants[0]);
       PtrCouplingScheme scheme = createSerialExplicitCouplingScheme(accessor);
       addCouplingScheme(scheme, accessor);
