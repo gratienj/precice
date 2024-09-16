@@ -1656,11 +1656,11 @@ int ParticipantImpl::getTotalMeshChanges() const
   PRECICE_ASSERT(_allowsRemeshing);
   Event e("intra-handshake", profiling::Synchronize);
   int   localMeshesChanges = _meshLock.countUnlocked();
-  PRECICE_DEBUG("Local Mesh Changes: {}", localMeshesChanges);
+  PRECICE_DEBUG("Mesh changes of rank: {}", localMeshesChanges);
 
   int totalMeshesChanges = 0;
   utils::IntraComm::allreduceSum(localMeshesChanges, totalMeshesChanges);
-  PRECICE_DEBUG("Total Mesh Changes: {}", totalMeshesChanges);
+  PRECICE_DEBUG("Mesh changes of participant: {}", totalMeshesChanges);
   return totalMeshesChanges;
 }
 
@@ -1671,12 +1671,11 @@ bool ParticipantImpl::reinitHandshake(bool requestReinit) const
   Event e("inter-handshake", profiling::Synchronize);
 
   if (not utils::IntraComm::isSecondary()) {
-    PRECICE_DEBUG("Reinitialization is{} required.", (requestReinit ? "" : " not"));
+    PRECICE_DEBUG("Remeshing is{} required by this participant.", (requestReinit ? "" : " not"));
 
-    PRECICE_DEBUG("Handshake Phase 1 - Broadcast requests");
     bool swarmReinitRequired = requestReinit;
     for (auto &iter : _m2ns) {
-      PRECICE_DEBUG("Performing handshake with {}", iter.first);
+      PRECICE_DEBUG("Coordinating remeshing with {}", iter.first);
       bool  received = false;
       auto &comm     = *iter.second.m2n->getPrimaryRankCommunication();
       if (iter.second.isRequesting) {
@@ -1688,7 +1687,7 @@ bool ParticipantImpl::reinitHandshake(bool requestReinit) const
       }
       swarmReinitRequired |= received;
     }
-    PRECICE_DEBUG("Result of Phase 1 -{} reinit required.", (swarmReinitRequired ? "" : " no"));
+    PRECICE_DEBUG("Coordinated that overall{} remeshing is required.", (swarmReinitRequired ? "" : " no"));
 
     utils::IntraComm::broadcast(swarmReinitRequired);
     return swarmReinitRequired;
