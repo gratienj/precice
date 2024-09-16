@@ -380,10 +380,15 @@ void ParticipantImpl::advance(
   // Update the coupling scheme time state. Necessary to get correct remainder.
   const bool isAtWindowEnd = _couplingScheme->addComputedTime(computedTimeStepSize);
 
-  if (_allowsRemeshing && isAtWindowEnd) {
-    int totalMeshesChanges = getTotalMeshChanges();
-    if (reinitHandshake(totalMeshesChanges)) {
-      reinitialize();
+  if (_allowsRemeshing) {
+    if (isAtWindowEnd) {
+      int totalMeshChanges = getTotalMeshChanges();
+      // TODO assert that if meshes change, we are in the first iteration of the time window.
+      if (reinitHandshake(totalMeshChanges)) {
+        reinitialize();
+      }
+    } else {
+      PRECICE_ASSERT(_meshLock.checkAll(), "Remeshing is only allowed when reaching the end of the time window.");
     }
   }
 
