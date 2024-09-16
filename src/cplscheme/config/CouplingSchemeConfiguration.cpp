@@ -394,7 +394,7 @@ void CouplingSchemeConfiguration::addCouplingScheme(
   }
   PRECICE_ASSERT(_couplingSchemes.count(participantName) > 0);
 
-  PRECICE_CHECK(!_allowRemeshing, "Remeshing is currently incompatible with compositional coupling schemes. If you need remeshing, try using a multi couplingscheme to compose your participants.");
+  PRECICE_CHECK(!_allowRemeshing, "Remeshing is currently incompatible with compositional coupling schemes. If you need remeshing, try using a multi coupling scheme to compose your participants.");
 
   // Create a composition to add the new cplScheme to
   if (!utils::contained(participantName, _couplingSchemeCompositions)) {
