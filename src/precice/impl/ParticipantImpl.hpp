@@ -456,8 +456,20 @@ private:
   /// Discards send (currently write) data of a participant after a given time when another iteration is required
   void trimSendDataAfter(double time);
 
-  int  getTotalMeshChanges() const;
+  /** Allreduce of the amount of changed meshes on each rank.
+   * @return the total amount of changed meshes of all ranks on each rank
+   */
+  int getTotalMeshChanges() const;
+
+  /** Exchanges request to remesh with all connecting participants.
+   *
+   * @param[in] requestReinit does this participant request to remesh?
+   *
+   * @return does any participant request to remesh?
+   */
   bool reinitHandshake(bool requestReinit) const;
+
+  /// Reinitializes preCICE
   void reinitialize();
 
   /// To allow white box tests.
