@@ -472,6 +472,9 @@ private:
   /// Reinitializes preCICE
   void reinitialize();
 
+  /// Common initialization for both initial and reinitalization
+  void initializeImpl();
+
   /// To allow white box tests.
   friend struct Integration::Serial::Whitebox::TestConfigurationPeano;
   friend struct Integration::Serial::Whitebox::TestConfigurationComsol;

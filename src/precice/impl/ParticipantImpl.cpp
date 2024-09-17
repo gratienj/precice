@@ -243,9 +243,8 @@ void ParticipantImpl::initialize()
 {
   PRECICE_TRACE();
   PRECICE_CHECK(_state != State::Finalized, "initialize() cannot be called after finalize().");
-  // PRECICE_CHECK(_state != State::Initialized, "initialize() may only be called once.");
-  // PRECICE_ASSERT(not _couplingScheme->isInitialized());
-  const bool reinitializing = _couplingScheme->isInitialized();
+  PRECICE_CHECK(_state != State::Initialized, "initialize() may only be called once.");
+  PRECICE_ASSERT(not _couplingScheme->isInitialized());
 
   bool failedToInitialize = _couplingScheme->isActionRequired(cplscheme::CouplingScheme::Action::InitializeData) && not _couplingScheme->isActionFulfilled(cplscheme::CouplingScheme::Action::InitializeData);
   PRECICE_CHECK(not failedToInitialize,
@@ -256,6 +255,59 @@ void ParticipantImpl::initialize()
   Event                        e("initialize", profiling::Fundamental, profiling::Synchronize);
   profiling::ScopedEventPrefix sep("initialize/");
 
+  initializeImpl();
+
+  _meshLock.lockAll();
+
+  for (auto &context : _accessor->writeDataContexts()) {
+    const double startTime = 0.0;
+    context.storeBufferedData(startTime);
+  }
+
+  mapInitialWrittenData();
+  performDataActions({action::Action::WRITE_MAPPING_POST});
+
+  PRECICE_DEBUG("Initialize coupling schemes");
+  _couplingScheme->initialize();
+
+  mapInitialReadData();
+  performDataActions({action::Action::READ_MAPPING_POST});
+
+  handleExports(ExportTiming::Initial);
+
+  resetWrittenData();
+
+  e.stop();
+  sep.pop();
+
+  _state = State::Initialized;
+  PRECICE_INFO(_couplingScheme->printCouplingState());
+  _solverAdvanceEvent = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
+}
+
+void ParticipantImpl::reinitialize()
+{
+  PRECICE_TRACE();
+  PRECICE_ASSERT(_allowsRemeshing);
+  PRECICE_INFO("Reinitializing Participant");
+  Event                        e("reinitialize");
+  profiling::ScopedEventPrefix sep("reinitialize/");
+  closeCommunicationChannels(CloseChannels::Distributed);
+
+  initializeImpl();
+
+  PRECICE_DEBUG("Reinitialize coupling schemes");
+  _couplingScheme->reinitialize();
+
+  e.stop();
+  sep.pop();
+}
+
+void ParticipantImpl::initializeImpl()
+{
+  PRECICE_TRACE();
+
+  // TODO only preprocess changed meshes
   PRECICE_DEBUG("Preprocessing provided meshes");
   for (MeshContext *meshContext : _accessor->usedMeshContexts()) {
     if (meshContext->provideMesh) {
@@ -311,40 +363,6 @@ void ParticipantImpl::initialize()
   }
   for (PtrWatchIntegral &watchIntegral : _accessor->watchIntegrals()) {
     watchIntegral->initialize();
-  }
-
-  if (reinitializing) {
-    PRECICE_DEBUG("Reinitialize coupling schemes");
-    _couplingScheme->reinitialize();
-  } else {
-    _meshLock.lockAll();
-
-    for (auto &context : _accessor->writeDataContexts()) {
-      const double startTime = 0.0;
-      context.storeBufferedData(startTime);
-    }
-
-    mapInitialWrittenData();
-    performDataActions({action::Action::WRITE_MAPPING_POST});
-
-    PRECICE_DEBUG("Initialize coupling schemes");
-    _couplingScheme->initialize();
-
-    mapInitialReadData();
-    performDataActions({action::Action::READ_MAPPING_POST});
-
-    handleExports(ExportTiming::Initial);
-
-    resetWrittenData();
-  }
-
-  e.stop();
-  sep.pop();
-
-  _state = State::Initialized;
-  if (!reinitializing) {
-    PRECICE_INFO(_couplingScheme->printCouplingState());
-    _solverAdvanceEvent = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
   }
 }
 
@@ -1696,18 +1714,6 @@ bool ParticipantImpl::reinitHandshake(bool requestReinit) const
     utils::IntraComm::broadcast(swarmReinitRequired);
     return swarmReinitRequired;
   }
-}
-
-void ParticipantImpl::reinitialize()
-{
-  PRECICE_TRACE();
-  PRECICE_ASSERT(_allowsRemeshing);
-  PRECICE_INFO("Reinitializing Participant");
-  Event                        e("reinitialize");
-  profiling::ScopedEventPrefix sep("reinitialize/");
-  closeCommunicationChannels(CloseChannels::Distributed);
-  _state = State::Constructed;
-  initialize();
 }
 
 } // namespace precice::impl
