@@ -297,6 +297,21 @@ void BaseCouplingScheme::initialize()
   _isInitialized = true;
 }
 
+void BaseCouplingScheme::reinitialize()
+{
+  PRECICE_TRACE();
+  PRECICE_ASSERT(isInitialized());
+
+  if (isImplicitCouplingScheme()) {
+    if (not doesFirstStep()) {
+      if (_acceleration) {
+        _acceleration->initialize(getAccelerationData());
+      }
+    }
+    initializeTXTWriters();
+  }
+}
+
 bool BaseCouplingScheme::sendsInitializedData() const
 {
   return _sendsInitializedData;

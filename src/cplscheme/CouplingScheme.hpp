@@ -78,6 +78,8 @@ public:
    */
   virtual void initialize() = 0;
 
+  virtual void reinitialize() = 0;
+
   /**
    * @brief Returns whether this participant of the coupling scheme sends initialized data.
    *

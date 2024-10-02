@@ -78,6 +78,14 @@ void CompositionalCouplingScheme::initialize()
   }
 }
 
+void CompositionalCouplingScheme::reinitialize()
+{
+  PRECICE_TRACE();
+  for (const auto scheme : allSchemes()) {
+    scheme->reinitialize();
+  }
+}
+
 bool CompositionalCouplingScheme::sendsInitializedData() const
 {
   PRECICE_TRACE();
