@@ -43,6 +43,9 @@ public:
       int inputDataID,
       int outputDataID) override;
 
+
+  virtual void computeMeshFilter(std::vector<int> const& in_filter, std::vector<int>& out_filter) override ;
+
   virtual void tagMeshFirstRound() override;
   virtual void tagMeshSecondRound() override;
 

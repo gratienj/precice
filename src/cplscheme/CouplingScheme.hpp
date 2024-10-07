@@ -102,7 +102,7 @@ public:
    *
    * Does not necessarily advance in time.
    */
-  virtual void advance() = 0;
+  virtual void advance(bool convergence) = 0;
 
   /// Finalizes the coupling and disconnects communication.
   virtual void finalize() = 0;

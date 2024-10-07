@@ -51,7 +51,7 @@ void ParallelCouplingScheme::exchangeInitialData()
   }
 }
 
-bool ParallelCouplingScheme::exchangeDataAndAccelerate()
+bool ParallelCouplingScheme::exchangeDataAndAccelerate(bool force_convergence)
 {
   bool convergence = true;
 
@@ -70,7 +70,7 @@ bool ParallelCouplingScheme::exchangeDataAndAccelerate()
     checkDataHasBeenReceived();
     if (isImplicitCouplingScheme()) {
       PRECICE_DEBUG("Perform acceleration (only second participant)...");
-      convergence = doImplicitStep();
+      convergence = doImplicitStep(force_convergence);
       sendConvergence(getM2N(), convergence);
     }
     PRECICE_DEBUG("Sending data...");

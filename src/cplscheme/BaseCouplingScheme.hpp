@@ -210,7 +210,7 @@ public:
   /**
    * @brief Advances the coupling scheme.
    */
-  void advance() override final;
+  void advance(bool convergence_forced) override final;
 
   /**
    * @brief Sets order of predictor of interface values for first participant.
@@ -351,7 +351,7 @@ protected:
    *
    * This function is called from the child classes
    */
-  bool doImplicitStep();
+  bool doImplicitStep(bool force_convergence);
 
   /**
    * @brief stores current data in buffer of all Waveforms
@@ -516,7 +516,7 @@ private:
    * @brief implements functionality for advance in base class.
    * @returns true, if iteration converged
    */
-  virtual bool exchangeDataAndAccelerate() = 0;
+  virtual bool exchangeDataAndAccelerate(bool force_convergence) = 0;
 
   /**
    * @brief interface to provide accelerated data, depending on coupling scheme being used

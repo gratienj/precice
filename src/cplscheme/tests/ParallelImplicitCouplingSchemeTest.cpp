@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(testInitializeData)
         cplScheme.markActionFulfilled(readIterationCheckpoint);
       }
       cplScheme.addComputedTime(timestepLength);
-      cplScheme.advance();
+      cplScheme.advance(true);
     }
   } else {
     BOOST_TEST(context.isNamed(nameParticipant1));
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(testInitializeData)
         cplScheme.markActionFulfilled(writeIterationCheckpoint);
       }
       cplScheme.addComputedTime(timestepLength);
-      cplScheme.advance();
+      cplScheme.advance(true);
       if (cplScheme.isActionRequired(readIterationCheckpoint)) {
         cplScheme.markActionFulfilled(readIterationCheckpoint);
       }

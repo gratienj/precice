@@ -99,7 +99,7 @@ void MultiCouplingScheme::exchangeInitialData()
   PRECICE_DEBUG("Initial data is exchanged in MultiCouplingScheme");
 }
 
-bool MultiCouplingScheme::exchangeDataAndAccelerate()
+bool MultiCouplingScheme::exchangeDataAndAccelerate(bool force_convergence)
 {
   PRECICE_ASSERT(isImplicitCouplingScheme(), "MultiCouplingScheme is always Implicit.");
   // @todo implement MultiCouplingScheme for explicit coupling
@@ -114,7 +114,7 @@ bool MultiCouplingScheme::exchangeDataAndAccelerate()
     }
     checkDataHasBeenReceived();
 
-    convergence = doImplicitStep();
+    convergence = doImplicitStep(force_convergence);
     for (const auto &m2nPair : _m2ns) {
       sendConvergence(m2nPair.second, convergence);
     }

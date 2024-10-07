@@ -25,7 +25,7 @@ void DummyCouplingScheme::initialize(
   _iterations    = 1;
 }
 
-void DummyCouplingScheme::advance()
+void DummyCouplingScheme::advance(bool convergence)
 {
   PRECICE_ASSERT(_isInitialized);
   PRECICE_ASSERT(_isOngoing);

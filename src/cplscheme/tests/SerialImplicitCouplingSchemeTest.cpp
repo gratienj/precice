@@ -76,7 +76,7 @@ void runCoupling(
     BOOST_TEST(not cplScheme.hasDataBeenReceived());
 
     // Tells coupling scheme, that a checkpoint has been created.
-    // All required actions have to be performed before calling advance().
+    // All required actions have to be performed before calling advance(true).
     cplScheme.markActionFulfilled(constants::actionWriteIterationCheckpoint());
     BOOST_TEST(not cplScheme.isActionRequired(constants::actionWriteIterationCheckpoint()));
 
@@ -85,7 +85,7 @@ void runCoupling(
       // The max timestep length is required to be obeyed.
       double maxLengthTimestep = cplScheme.getNextTimestepMaxLength();
       cplScheme.addComputedTime(maxLengthTimestep);
-      cplScheme.advance();
+      cplScheme.advance(true);
       iterationCount++;
       // A coupling timestep is complete, when the coupling iterations are
       // globally converged and if subcycling steps have filled one global
@@ -140,7 +140,7 @@ void runCoupling(
     BOOST_TEST(cplScheme.hasDataBeenReceived());
 
     // Tells coupling scheme, that a checkpoint has been created.
-    // All required actions have to be performed before calling advance().
+    // All required actions have to be performed before calling advance(true).
     cplScheme.markActionFulfilled(constants::actionWriteIterationCheckpoint());
     BOOST_TEST(not cplScheme.isActionRequired(constants::actionWriteIterationCheckpoint()));
 
@@ -152,7 +152,7 @@ void runCoupling(
       // The max timestep length is required to be obeyed.
       double maxLengthTimestep = cplScheme.getNextTimestepMaxLength();
       cplScheme.addComputedTime(maxLengthTimestep);
-      cplScheme.advance();
+      cplScheme.advance(true);
       iterationCount++;
       // A coupling timestep is complete, when the coupling iterations are
       // globally converged and if subcycling steps have filled one global
@@ -237,7 +237,7 @@ void runCouplingWithSubcycling(
     BOOST_TEST(not cplScheme.hasDataBeenReceived());
 
     // Tells coupling scheme, that a checkpoint has been created.
-    // All required actions have to be performed before calling advance().
+    // All required actions have to be performed before calling advance(true).
     cplScheme.markActionFulfilled(constants::actionWriteIterationCheckpoint());
     BOOST_TEST(not cplScheme.isActionRequired(constants::actionWriteIterationCheckpoint()));
 
@@ -248,7 +248,7 @@ void runCouplingWithSubcycling(
     // Main coupling loop
     while (cplScheme.isCouplingOngoing()) {
       cplScheme.addComputedTime(computedTimestepLength);
-      cplScheme.advance();
+      cplScheme.advance(true);
       // A coupling timestep is complete, when the coupling iterations are
       // globally converged and if subcycling steps have filled one global
       // timestep.
@@ -316,7 +316,7 @@ void runCouplingWithSubcycling(
     BOOST_TEST(cplScheme.hasDataBeenReceived());
 
     // Tells coupling scheme, that a checkpoint has been created.
-    // All required actions have to be performed before calling advance().
+    // All required actions have to be performed before calling advance(true).
     cplScheme.markActionFulfilled(constants::actionWriteIterationCheckpoint());
     BOOST_TEST(not cplScheme.isActionRequired(constants::actionWriteIterationCheckpoint()));
 
@@ -328,7 +328,7 @@ void runCouplingWithSubcycling(
     // Main coupling loop
     while (cplScheme.isCouplingOngoing()) {
       cplScheme.addComputedTime(computedTimestepLength);
-      cplScheme.advance();
+      cplScheme.advance(true);
       computedTimestepLength =
           cplScheme.getNextTimestepMaxLength() < preferredTimestepLength
               ? cplScheme.getNextTimestepMaxLength()
@@ -686,7 +686,7 @@ BOOST_AUTO_TEST_CASE(testAccelerationWithLinearExtrapolation)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -730,7 +730,7 @@ BOOST_AUTO_TEST_CASE(testAccelerationWithLinearExtrapolation)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -921,7 +921,7 @@ BOOST_AUTO_TEST_CASE(testLinearExtrapolationInit)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -965,7 +965,7 @@ BOOST_AUTO_TEST_CASE(testLinearExtrapolationInit)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -1127,7 +1127,7 @@ BOOST_AUTO_TEST_CASE(testAccelerationWithQuadraticExtrapolation)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -1171,7 +1171,7 @@ BOOST_AUTO_TEST_CASE(testAccelerationWithQuadraticExtrapolation)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -1215,7 +1215,7 @@ BOOST_AUTO_TEST_CASE(testAccelerationWithQuadraticExtrapolation)
     mesh->data(sendDataIndex)->values() = v;
     cplScheme.addComputedTime(timestepLength);
 
-    cplScheme.advance();
+    cplScheme.advance(true);
 
     if (i < maxIterations - 1) {
       BOOST_TEST(not cplScheme.isTimeWindowComplete());
@@ -1571,7 +1571,7 @@ BOOST_AUTO_TEST_CASE(testInitializeData)
         cplScheme.markActionFulfilled(readIterationCheckpoint);
       }
       cplScheme.addComputedTime(timestepLength);
-      cplScheme.advance();
+      cplScheme.advance(true);
     }
   } else {
     BOOST_TEST(context.isNamed(nameParticipant1));
@@ -1603,7 +1603,7 @@ BOOST_AUTO_TEST_CASE(testInitializeData)
         cplScheme.markActionFulfilled(writeIterationCheckpoint);
       }
       cplScheme.addComputedTime(timestepLength);
-      cplScheme.advance();
+      cplScheme.advance(true);
       if (cplScheme.isActionRequired(readIterationCheckpoint)) {
         cplScheme.markActionFulfilled(readIterationCheckpoint);
       }

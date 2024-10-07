@@ -82,14 +82,14 @@ void CompositionalCouplingScheme::addComputedTime(double timeToAdd)
   _lastAddedTime += timeToAdd;
 }
 
-void CompositionalCouplingScheme::advance()
+void CompositionalCouplingScheme::advance(bool convergence)
 {
   PRECICE_TRACE();
   bool moreSchemesToHandle = false;
   do {
     for (SchemesIt it = _activeSchemesBegin; it != _activeSchemesEnd; it++) {
       if (not it->onHold) {
-        it->scheme->advance();
+        it->scheme->advance(convergence);
       }
     }
     moreSchemesToHandle = determineActiveCouplingSchemes();

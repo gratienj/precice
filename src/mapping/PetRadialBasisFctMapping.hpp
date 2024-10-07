@@ -87,6 +87,11 @@ public:
   /// Maps input data to output data from input mesh to output mesh.
   virtual void map(int inputDataID, int outputDataID) override;
 
+  virtual void computeMeshFilter(std::vector<int> const& in_filter, std::vector<int>& out_filter) override
+  {
+
+  }
+
   friend struct MappingTests::PetRadialBasisFunctionMapping::Serial::SolutionCaching;
 
   virtual void tagMeshFirstRound() override;

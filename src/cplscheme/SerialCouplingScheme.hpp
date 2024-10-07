@@ -68,7 +68,7 @@ private:
    * @brief Exchanges data between the participants of the SerialCouplingSchemes and applies acceleration.
    * @returns true, if iteration converged
    */
-  bool exchangeDataAndAccelerate() override;
+  bool exchangeDataAndAccelerate(bool set_convergence) override;
 
   /**
    * @brief SerialCouplingSchemes applies acceleration to send data

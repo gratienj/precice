@@ -151,6 +151,12 @@ public:
             int                         meshID,
             int                         valueDimension);
 
+  void send(precice::span<double const> itemsToSend,
+            std::vector<int> const&     filter,
+            int                         meshID,
+            int                         valueDimension);
+
+
   /**
    * @brief The master sends a bool to the other master, for performance reasons, we
    * neglect the gathering and checking step.
@@ -176,6 +182,11 @@ public:
   void receive(precice::span<double> itemsToReceive,
                int                   meshID,
                int                   valueDimension);
+
+  void receive(precice::span<double> itemsToReceive,
+               int                   meshID,
+               int                   valueDimension,
+               bool                  with_select);
 
   /// All slaves receive a bool (the same for each slave).
   void receive(bool &itemToReceive);

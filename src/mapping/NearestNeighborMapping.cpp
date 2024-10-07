@@ -139,7 +139,25 @@ void NearestNeighborMapping::map(
       scaleConsistentMapping(inputDataID, outputDataID);
     }
   }
+
+  if(input()->hasMeshFilter() && ! output()->hasMappingMeshFilter(input()->getID()))
+  {
+	PRECICE_INFO("COMPUTE MAPPING MESH FILTER FROM \"{}\" TO \"{}\" ",input()->getID(),output()->getID()) ;
+	computeMeshFilter(input()->activatedVerticesIds(),output()->mappingActivatedVerticesIds(input()->getID())) ;
+	output()->setDataMappingMeshFilter(outputDataID,input()->getID()) ;
+	PRECICE_INFO("MAPPING MESH FILTER SIZE \"{}\" :",output()->mappingActivatedVerticesIds(input()->getID()).size()) ;
+  }
 }
+
+void NearestNeighborMapping::computeMeshFilter(std::vector<int> const& input_filter, std::vector<int>& output_filter)
+{
+    output_filter.reserve(input_filter.size()) ;
+	for (auto i : input_filter) {
+	  int const outputIndex = _vertexIndices[i] ;
+	  output_filter.push_back(outputIndex) ;
+	}
+}
+
 
 void NearestNeighborMapping::tagMeshFirstRound()
 {

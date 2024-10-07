@@ -316,6 +316,7 @@ public:
 
   /// Asynchronously receives an array of double values.
   virtual PtrRequest aReceive(precice::span<double> itemsToReceive, int rankSender) = 0;
+  //virtual PtrRequest aReceive(precice::span<int> itemsToReceive, int rankSender) = 0;
 
   /// Asynchronously receives a vector of double values.
   /*

@@ -77,8 +77,25 @@ void BaseCouplingScheme::sendData(const m2n::PtrM2N &m2n, const DataMap &sendDat
 
   for (const DataMap::value_type &pair : sendData) {
     // Data is actually only send if size>0, which is checked in the derived classes implementaiton
-    m2n->send(pair.second->values(), pair.second->getMeshID(), pair.second->getDimensions());
+    PRECICE_INFO("BASE COUPLING SEND DATA ID \"{}\", MESH ID \"{}\", DIMENSION \"{}\" INFO ", pair.first, pair.second->getMeshID(), pair.second->getDimensions()) ;
 
+    if(pair.second->hasMeshFilter() || pair.second->meshFilterActivated() || pair.second->hasDataMappingMeshFilter(pair.first))
+    {
+      if(pair.second->hasDataMappingMeshFilter(pair.first))
+      {
+		  PRECICE_INFO("BASE COUPLING SEND MAPPING SELECT DATA ID \"{}\" INFO : SIZE \"{}\" ",pair.first,pair.second->getDataMappingMeshFilterIds(pair.first).size()) ;
+		  m2n->send(pair.second->values(),pair.second->getDataMappingMeshFilterIds(pair.first),pair.second->getMeshID(), pair.second->getDimensions());
+      }
+      else
+      {
+		  PRECICE_INFO("BASE COUPLING SEND SELECT DATA ID \"{}\" INFO : SIZE \"{}\" ",pair.first,pair.second->filterIds().size()) ;
+		  m2n->send(pair.second->values(),pair.second->filterIds(),pair.second->getMeshID(), pair.second->getDimensions());
+      }
+    }
+    else
+      m2n->send(pair.second->values(), pair.second->getMeshID(), pair.second->getDimensions());
+
+    PRECICE_INFO("BASE COUPLING SEND DATA ID \"{}\" INFO ",pair.first) ;
     sentDataIDs.push_back(pair.first);
   }
   PRECICE_DEBUG("Number of sent data sets = {}", sentDataIDs.size());
@@ -91,9 +108,17 @@ void BaseCouplingScheme::receiveData(const m2n::PtrM2N &m2n, const DataMap &rece
   PRECICE_ASSERT(m2n.get());
   PRECICE_ASSERT(m2n->isConnected());
   for (const DataMap::value_type &pair : receiveData) {
+    PRECICE_INFO("BASE COUPLING RECEIVE DATA ID \"{}\", MESH ID \"{}\", DIMENSION \"{}\" INFO ", pair.first, pair.second->getMeshID(), pair.second->getDimensions()) ;
     // Data is only received on ranks with size>0, which is checked in the derived class implementation
-    m2n->receive(pair.second->values(), pair.second->getMeshID(), pair.second->getDimensions());
+    if(pair.second->meshFilterActivated())
+    {
+      PRECICE_INFO("BASE COUPLING RECEIVE DATA WITH SELECT \"{}\" ",pair.second->getMeshID()) ;
+      m2n->receive(pair.second->values(), pair.second->getMeshID(), true, pair.second->getDimensions());
+    }
+    else
+      m2n->receive(pair.second->values(), pair.second->getMeshID(), pair.second->getDimensions());
 
+    PRECICE_INFO("BASE COUPLING RECEIVE DATA ID \"{}\" INFO ",pair.first) ;
     receivedDataIDs.push_back(pair.first);
   }
   PRECICE_DEBUG("Number of received data sets = {}", receivedDataIDs.size());
@@ -181,7 +206,7 @@ void BaseCouplingScheme::initializeData()
   }
 }
 
-void BaseCouplingScheme::advance()
+void BaseCouplingScheme::advance(bool convergence_forced)
 {
   PRECICE_TRACE(_timeWindows, _time);
   checkCompletenessRequiredActions();
@@ -195,7 +220,7 @@ void BaseCouplingScheme::advance()
 
     _timeWindows += 1; // increment window counter. If not converged, will be decremented again later.
 
-    bool convergence = exchangeDataAndAccelerate();
+    bool convergence = exchangeDataAndAccelerate(convergence_forced);
 
     if (isImplicitCouplingScheme()) { // check convergence
       if (not convergence) {          // repeat window
@@ -611,12 +636,13 @@ bool BaseCouplingScheme::anyDataRequiresInitialization(BaseCouplingScheme::DataM
   return false;
 }
 
-bool BaseCouplingScheme::doImplicitStep()
+bool BaseCouplingScheme::doImplicitStep(bool force_convergence)
 {
   storeDataInWaveforms();
 
   PRECICE_DEBUG("measure convergence of the coupling iteration");
-  bool convergence = measureConvergence();
+  bool convergence = measureConvergence() ; 
+  convergence =  force_convergence;
   // Stop, when maximal iteration count (given in config) is reached
   if (_iterations == _maxIterations)
     convergence = true;

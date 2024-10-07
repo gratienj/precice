@@ -107,7 +107,7 @@ public:
   void addComputedTime(double timeToAdd) final override;
 
   /// Exchanges data and updates the state of the coupling scheme.
-  void advance() final override;
+  void advance(bool convergence) final override;
 
   /// Finalizes the coupling and disconnects communication.
   void finalize() final override;

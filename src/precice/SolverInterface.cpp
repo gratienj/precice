@@ -37,9 +37,9 @@ void SolverInterface::initializeData()
 }
 
 double SolverInterface::advance(
-    double computedTimestepLength)
+    double computedTimestepLength, bool converged)
 {
-  return _impl->advance(computedTimestepLength);
+  return _impl->advance(computedTimestepLength, converged);
 }
 
 void SolverInterface::finalize()
@@ -315,6 +315,20 @@ void SolverInterface::getMeshVerticesAndIDs(const int meshID,
                                             double *  coordinates) const
 {
   _impl->getMeshVerticesAndIDs(meshID, size, ids, coordinates);
+}
+
+void SolverInterface::setMeshFilter(const int  meshID,
+                                    const int  size,
+                                    int const* ids)
+{
+  _impl->setMeshFilter(meshID, size, ids) ;
+}
+
+void SolverInterface::activateMeshFilter(
+    const int meshID,
+    bool value)
+{
+  _impl->activateMeshFilter(meshID, value) ;
 }
 
 std::string getVersionInformation()

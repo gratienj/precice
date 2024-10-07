@@ -42,6 +42,13 @@ public:
   /// get vertex offsets of this CouplingData's mesh. See Mesh::getVertexOffsets().
   std::vector<int> getVertexOffsets();
 
+  bool hasMeshFilter();
+  bool hasDataMappingMeshFilter(int dataID);
+  bool meshFilterActivated() ;
+
+  std::vector<int> const& filterIds() const;
+  std::vector<int> const& getDataMappingMeshFilterIds(int dataID) const;
+
   ///  True, if the data values of this CouplingData require to be initialized by this participant.
   const bool requiresInitialization;
 
@@ -65,6 +72,7 @@ private:
 
   /// Mesh associated with this CouplingData
   mesh::PtrMesh _mesh;
+
 };
 
 } // namespace cplscheme

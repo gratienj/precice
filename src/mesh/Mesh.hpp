@@ -193,6 +193,79 @@ public:
 
   void setGlobalNumberOfVertices(int num);
 
+  bool hasMeshFilter() const {
+    return _activated_vertices_ids.size() > 0 ;
+  }
+
+  std::vector<int> const& activatedVerticesIds() const {
+    return _activated_vertices_ids ;
+  }
+
+  std::vector<int>& mappingActivatedVerticesIds(int mesh_id) {
+    return _mapping_activated_vertices_ids[mesh_id] ;
+  }
+
+  bool hasMappingMeshFilter(int mesh_id) const {
+    auto it =  _mapping_activated_vertices_ids.find(mesh_id) ;
+    if(it==_mapping_activated_vertices_ids.end())
+      return false ;
+    else
+      return it->second.size() > 0 ;
+  }
+
+  std::vector<int> const& mappingActivatedVerticesIds(int mesh_id) const {
+    auto it =  _mapping_activated_vertices_ids.find(mesh_id) ;
+    if(it==_mapping_activated_vertices_ids.end())
+      return _empty_vertices_ids;
+    else
+      it->second ;
+  }
+
+  void removeMappingActivatedVerticesIds(int mesh_id) {
+	auto it =  _mapping_activated_vertices_ids.find(mesh_id) ;
+	if(it!=_mapping_activated_vertices_ids.end())
+		_mapping_activated_vertices_ids.erase(it) ;
+  }
+
+
+  void setFilter(std::size_t size, int const* ids) {
+    _activated_vertices_ids.resize(size) ;
+    std::copy(ids, ids+size,_activated_vertices_ids.begin()) ;
+    std::cout<<"MESH SET FILTER : "<<size<<std::endl ;
+    for( auto index : _activated_vertices_ids)
+      std::cout<<"Activated Vertices : "<<index<<std::endl ;
+  }
+
+
+  void activateVerticesFilter(bool value) {
+    _vertices_filter_activated = value ;
+  }
+
+  bool verticesFilterIsActivated() const {
+    return _vertices_filter_activated ;
+  }
+
+  void clearFilter() {
+    _activated_vertices_ids.clear() ;
+  }
+
+  void setDataMappingMeshFilter(int dataID, int meshID) {
+	  _data_mesh_filter[dataID] = meshID ;
+  }
+
+  bool hasDataMappingMeshFilter(int dataID) const {
+	  return _data_mesh_filter.find(dataID) != _data_mesh_filter.end() ;
+  }
+
+  std::vector<int> const& getDataMappingMeshFilterIds(int dataID) {
+	  auto iter =	 _data_mesh_filter.find(dataID) ;
+	  if(iter == _data_mesh_filter.end())
+		  return _empty_vertices_ids ;
+	  else
+		  return _mapping_activated_vertices_ids[iter->second] ;
+  }
+
+
   // Get the data of owned vertices for given data ID
   Eigen::VectorXd getOwnedVertexData(DataID dataID);
 
@@ -266,6 +339,12 @@ private:
    * Duplicated vertices are only accounted once.
    */
   int _globalNumberOfVertices = -1;
+
+  bool _vertices_filter_activated = false ;
+  std::vector<int> _activated_vertices_ids ;
+  std::map<int,std::vector<int>> _mapping_activated_vertices_ids ;
+  std::map<int,int>              _data_mesh_filter ;
+  const std::vector<int>         _empty_vertices_ids ;
 
   /**
    * @brief each rank stores list of connected remote ranks.

@@ -197,7 +197,7 @@ void runTestEnforceGatherScatter(std::vector<double> masterPartition, std::strin
       interface.writeBlockScalarData(writeDataID, size,
                                      ids.data(), writeData.data());
 
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(readDataID, size,
                                     ids.data(), readData.data());
       // The received data on the slave rank is always the same
@@ -236,7 +236,7 @@ void runTestEnforceGatherScatter(std::vector<double> masterPartition, std::strin
       // Write data, advance solverinterface and read data
       interface.writeBlockScalarData(writeDataID, size,
                                      ids.data(), writeData.data());
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(readDataID, size,
                                     ids.data(), readData.data());
       // The received data is always the same
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(GlobalRBFPartitioning)
     interface.setMeshVertices(meshID, 2, positions, vertexIDs);
     interface.initialize();
     double values[2];
-    interface.advance(1.0);
+    interface.advance(1.0, true);
     interface.readBlockScalarData(dataID, 2, vertexIDs, values);
     //    std::cout << context.rank <<": " << values << '\n';
     interface.finalize();
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(GlobalRBFPartitioning)
     int    dataID    = interface.getDataID("Data2", meshID);
     double values[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
     interface.writeBlockScalarData(dataID, 6, vertexIDs, values);
-    interface.advance(1.0);
+    interface.advance(1.0, true);
     interface.finalize();
   }
 }
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(LocalRBFPartitioning)
     interface.setMeshVertices(meshID, 2, positions, vertexIDs);
     interface.initialize();
     double values[2];
-    interface.advance(1.0);
+    interface.advance(1.0,true);
     interface.readBlockScalarData(dataID, 2, vertexIDs, values);
     interface.finalize();
   } else {
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(LocalRBFPartitioning)
     int    dataID    = interface.getDataID("Data2", meshID);
     double values[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
     interface.writeBlockScalarData(dataID, 6, vertexIDs, values);
-    interface.advance(1.0);
+    interface.advance(1.0,true);
     interface.finalize();
   }
 }
@@ -351,7 +351,7 @@ BOOST_AUTO_TEST_CASE(CouplingOnLine)
                             xCoord, yCoord, 0.4 + offset};
     interface.setMeshVertices(meshID, 4, positions, vertexIDs);
     interface.initialize();
-    interface.advance(1.0);
+    interface.advance(1.0,true);
     interface.finalize();
   } else {
     SolverInterface interface(context.name, configFilename, context.rank, context.size);
@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(CouplingOnLine)
                             xCoord, yCoord, 1.2};
     interface.setMeshVertices(meshID, 10, positions, vertexIDs);
     interface.initialize();
-    interface.advance(1.0);
+    interface.advance(1.0,true);
     interface.finalize();
   }
 }
@@ -455,7 +455,7 @@ void runTestQN(std::string const &config, TestContext const &context)
     }
 
     interface.writeBlockScalarData(writeDataID, 4, vertexIDs, outValues);
-    interface.advance(1.0);
+    interface.advance(1.0,true);
 
     if (interface.isActionRequired(precice::constants::actionReadIterationCheckpoint())) {
       interface.markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
@@ -558,7 +558,7 @@ void runTestQNEmptyPartition(std::string const &config, TestContext const &conte
         (context.isNamed("SolverTwo") and (not context.isMaster()))) {
       interface.writeBlockScalarData(writeDataID, 4, vertexIDs, outValues);
     }
-    interface.advance(1.0);
+    interface.advance(1.0,true);
 
     if (interface.isActionRequired(precice::constants::actionReadIterationCheckpoint())) {
       interface.markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
@@ -704,7 +704,7 @@ void runTestDistributedCommunication(std::string const &config, TestContext cons
     }
   }
 
-  precice.advance(1.0);
+  precice.advance(1.0, true);
 
   if (context.isNamed("Fluid")) { //Fluid
     for (size_t i = 0; i < vertexIDs.size(); i++) {
@@ -812,7 +812,7 @@ BOOST_AUTO_TEST_CASE(TestBoundingBoxInitialization)
     }
   }
 
-  precice.advance(1.0);
+  precice.advance(1.0,true);
 
   if (context.isNamed("Structure")) {
     for (size_t i = 0; i < vertexIDs.size(); i++) {
@@ -887,7 +887,7 @@ void runTestAccessReceivedMesh(const std::string         configName,
                                        &ids[startIndex], writeData.data());
       }
 
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
     }
   } else {
     // Defines the mesh and reads data
@@ -926,7 +926,7 @@ void runTestAccessReceivedMesh(const std::string         configName,
     std::vector<double> readData(size);
     while (interface.isCouplingOngoing()) {
 
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(dataID, size,
                                     ids.data(), readData.data());
 
@@ -1089,7 +1089,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshAndMapping)
       // Write data
       interface.writeBlockScalarData(writeDataID, otherMeshSize,
                                      otherIDs.data(), writeData.data());
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(readDataID, ownIDs.size(),
                                     ownIDs.data(), readData.data());
 
@@ -1125,7 +1125,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshAndMapping)
 
       interface.writeBlockScalarData(writeDataID, ids.size(),
                                      ids.data(), writeData.data());
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(readDataID, ids.size(),
                                     ids.data(), readData.data());
       // Expected data according to the writeData
@@ -1236,7 +1236,7 @@ BOOST_AUTO_TEST_CASE(TestBoundingBoxInitializationTwoWay)
     }
   }
 
-  precice.advance(1.0);
+  precice.advance(1.0,true);
 
   if (context.isNamed("Fluid")) {
     for (size_t i = 0; i < vertexIDs.size(); i++) {
@@ -1261,7 +1261,7 @@ BOOST_AUTO_TEST_CASE(NearestProjectionRePartitioning)
 
     if (context.isMaster()) {
       interface.initialize();
-      interface.advance(1.0);
+      interface.advance(1.0,true);
       interface.finalize();
     } else {
       const MeshID meshID     = interface.getMeshID("CellCenters");
@@ -1342,7 +1342,7 @@ BOOST_AUTO_TEST_CASE(NearestProjectionRePartitioning)
       interface.setMeshVertices(meshID, numberOfVertices, positions.data(), vertexIDs.data());
       interface.initialize();
       BOOST_TEST(impl(interface).mesh("Nodes").triangles().size() == 15);
-      interface.advance(1.0);
+      interface.advance(1.0,true);
       interface.finalize();
     }
   } else {
@@ -1412,7 +1412,7 @@ BOOST_AUTO_TEST_CASE(NearestProjectionRePartitioning)
     }
 
     interface.initialize();
-    interface.advance(1.0);
+    interface.advance(1.0,true);
     interface.finalize();
   }
 }
@@ -1432,7 +1432,7 @@ BOOST_AUTO_TEST_CASE(MasterSockets)
   double          position[2] = {0, 0};
   interface.setMeshVertex(meshID, position);
   interface.initialize();
-  interface.advance(1.0);
+  interface.advance(1.0,true);
   interface.finalize();
 }
 
@@ -1533,7 +1533,7 @@ void multiCouplingThreeSolversParallelControl(const std::string configFile, cons
           cplInterface.markActionFulfilled(writeIterCheckpoint);
         }
 
-        cplInterface.advance(maxDt);
+        cplInterface.advance(maxDt,true);
 
         if (cplInterface.isActionRequired(readIterCheckpoint)) {
           cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -1558,7 +1558,7 @@ void multiCouplingThreeSolversParallelControl(const std::string configFile, cons
           cplInterface.markActionFulfilled(writeIterCheckpoint);
         }
 
-        cplInterface.advance(maxDt);
+        cplInterface.advance(maxDt,true);
 
         if (cplInterface.isActionRequired(readIterCheckpoint)) {
           cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -1598,7 +1598,7 @@ void multiCouplingThreeSolversParallelControl(const std::string configFile, cons
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -1636,7 +1636,7 @@ void multiCouplingThreeSolversParallelControl(const std::string configFile, cons
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);

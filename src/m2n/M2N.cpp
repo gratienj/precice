@@ -230,6 +230,41 @@ void M2N::send(
   }
 }
 
+void M2N::send(
+    precice::span<double const> itemsToSend,
+    std::vector<int> const&     selection,
+    int                         meshID,
+    int                         valueDimension)
+{
+  if (not _useOnlyMasterCom) {
+    PRECICE_ASSERT(_areSlavesConnected);
+    PRECICE_ASSERT(_distComs.find(meshID) != _distComs.end());
+    PRECICE_ASSERT(_distComs[meshID].get() != nullptr);
+
+    if (precice::syncMode && not utils::MasterSlave::isSlave()) {
+      bool ack = true;
+      _masterCom->send(ack, 0);
+      _masterCom->receive(ack, 0);
+      _masterCom->send(ack, 0);
+    }
+    Event e("m2n.sendData", precice::syncMode);
+    _distComs[meshID]->send(itemsToSend,selection,valueDimension);
+  } else {
+    PRECICE_ASSERT(_isMasterConnected);
+    int nb_items = selection.size() ;
+    _masterCom->send(nb_items,0);
+    _masterCom->send(selection,0);
+    std::vector<double> buffer(nb_items*valueDimension) ;
+    int i=0 ;
+    for(auto id : selection)
+    {
+      for(int k=0;k<valueDimension;++k)
+        buffer[i++] = itemsToSend[id*valueDimension+k] ;
+    }
+    _masterCom->send(buffer,0);
+  }
+}
+
 void M2N::send(bool itemToSend)
 {
   PRECICE_TRACE(utils::MasterSlave::getRank());
@@ -301,6 +336,54 @@ void M2N::receive(precice::span<double> itemsToReceive,
     _masterCom->receive(itemsToReceive, 0);
   }
 }
+
+void M2N::receive(precice::span<double> itemsToReceive,
+                  int                   meshID,
+                  int                   valueDimension,
+                  bool                  with_select)
+{
+  if (not _useOnlyMasterCom) {
+    PRECICE_ASSERT(_areSlavesConnected);
+    PRECICE_ASSERT(_distComs.find(meshID) != _distComs.end());
+    PRECICE_ASSERT(_distComs[meshID].get() != nullptr);
+
+    if (precice::syncMode) {
+      if (not utils::MasterSlave::isSlave()) {
+        bool ack;
+
+        _masterCom->receive(ack, 0);
+        _masterCom->send(ack, 0);
+        _masterCom->receive(ack, 0);
+      }
+    }
+    Event e("m2n.receiveData", precice::syncMode);
+    if(with_select)
+      _distComs[meshID]->receive(itemsToReceive, with_select, valueDimension);
+    else
+      _distComs[meshID]->receive(itemsToReceive, valueDimension);
+  } else {
+    PRECICE_ASSERT(_isMasterConnected);
+    if(with_select)
+    {
+      int select_size = 0 ;
+      _masterCom->receive(select_size, 0);
+      std::vector<int> select(select_size) ;
+      _masterCom->receive(select, 0);
+      std::vector<double> buffer(select_size*valueDimension) ;
+      _masterCom->receive(buffer, 0);
+      int i=0 ;
+      for(auto id : select)
+      {
+        for(int k=0;k<valueDimension;++k)
+          itemsToReceive[id*valueDimension+k] = buffer[i++] ;
+      }
+    }
+    else
+      _masterCom->receive(itemsToReceive, 0);
+  }
+}
+
+
 
 void M2N::receive(bool &itemToReceive)
 {

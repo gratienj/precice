@@ -83,9 +83,11 @@ public:
 
   /// Sends an array of double values from all slaves (different for each slave).
   void send(precice::span<double const> itemsToSend, int valueDimension) override;
+  void send(precice::span<double const> itemsToSend, std::vector<int> const& select, int valueDimension = 1) override;
 
   /// All slaves receive an array of doubles (different for each slave).
   void receive(precice::span<double> itemsToReceive, int valueDimension) override;
+  void receive(precice::span<double> itemsToReceive, bool with_select, int valueDimension = 1) override;
 
   /// Broadcasts an int to connected ranks on remote participant. Not available for GatherScatterCommunication.
   void broadcastSend(const int &itemToSend) override;

@@ -82,7 +82,7 @@ public:
   /**
    * @brief
    */
-  void advance() override final;
+  void advance(bool convergence) override final;
 
   /**
    * @brief

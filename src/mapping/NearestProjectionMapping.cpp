@@ -188,6 +188,45 @@ void NearestProjectionMapping::map(
     }
   }
 }
+void NearestProjectionMapping::computeMeshFilter(std::vector<int> const& in_filter,
+                                                 std::vector<int>& out_filter)
+{
+
+  std::set<int> select ;
+  if (hasConstraint(CONSERVATIVE)) {
+    PRECICE_ASSERT(getConstraint() == CONSERVATIVE, getConstraint());
+    PRECICE_DEBUG("Map conservative");
+    PRECICE_ASSERT(_interpolations.size() == input()->vertices().size(),
+                   _interpolations.size(), input()->vertices().size());
+
+    for (auto i : in_filter) {
+      const auto &elems    = _interpolations[i].getWeightedElements();
+      for (const auto &elem : elems) {
+          select.insert(elem.vertexID) ;
+      }
+    }
+  } else {
+    PRECICE_DEBUG("Map consistent");
+    PRECICE_ASSERT(_interpolations.size() == output()->vertices().size(),
+                   _interpolations.size(), output()->vertices().size());
+    std::vector<int> marked(input()->vertices().size(),0) ;
+    for (auto i : in_filter)
+      marked[i] = 1 ;
+    for (size_t i = 0; i < output()->vertices().size(); i++) {
+      const auto &elems     = _interpolations[i].getWeightedElements();
+      for (const auto &elem : elems) {
+          if(marked[elem.vertexID])
+          {
+            select.insert(i) ;
+            break ;
+          }
+      }
+    }
+  }
+  out_filter.reserve(select.size()) ;
+  for(auto s : select)
+    out_filter.push_back(s) ;
+}
 
 void NearestProjectionMapping::tagMeshFirstRound()
 {

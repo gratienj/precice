@@ -142,7 +142,7 @@ public:
    *
    * @return Maximum length of next timestep to be computed by solver.
    */
-  double advance(double computedTimestepLength);
+  double advance(double computedTimestepLength, bool converged=false);
 
   /**
    * @brief Finalizes preCICE.
@@ -881,6 +881,16 @@ public:
       double *  coordinates) const;
 
   ///@}
+
+
+  void setMeshFilter(
+      const int meshID,
+      const int  size,
+      int const* ids) ;
+
+  void activateMeshFilter(
+      const int meshID,
+      bool value) ;
 
   /// Disable copy construction
   SolverInterface(const SolverInterface &copy) = delete;

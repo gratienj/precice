@@ -94,12 +94,14 @@ public:
    *        deduced from the current and remote vertex distributions.
    */
   void send(precice::span<double const> itemsToSend, int valueDimension = 1) override;
+  void send(precice::span<double const> itemsToSend, std::vector<int> const& select, int valueDimension = 1) override;
 
   /**
    * @brief Receives a subset of local double values corresponding to local
    *        indices deduced from the current and remote vertex distributions.
    */
   void receive(precice::span<double> itemsToReceive, int valueDimension = 1) override;
+  void receive(precice::span<double> itemsToReceive, bool with_select, int valueDimension = 1) override;
 
   /// Broadcasts an int to connected ranks on remote participant
   void broadcastSend(const int &itemToSend) override;
@@ -130,6 +132,7 @@ private:
    * @param[in] blocking False means that the function returns, even when there are requests left.
    */
   void checkBufferedRequests(bool blocking);
+  void checkSelectRequests(bool blocking);
 
   com::PtrCommunicationFactory _communicationFactory;
 
@@ -151,7 +154,9 @@ private:
   struct Mapping {
     int                 remoteRank;
     std::vector<int>    indices;
+    std::vector<int>    select_indices;
     com::PtrRequest     request;
+    com::PtrRequest     select_request;
     std::vector<double> recvBuffer;
   };
 
@@ -180,7 +185,7 @@ private:
   std::vector<ConnectionData> _connectionDataVector;
 
   bool _isConnected = false;
-
+  std::list<std::shared_ptr<com::Request>> selectRequests ;
   std::list<std::pair<std::shared_ptr<com::Request>,
                       std::shared_ptr<std::vector<double>>>>
       bufferedRequests;

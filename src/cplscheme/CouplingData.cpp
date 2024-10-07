@@ -19,6 +19,7 @@ CouplingData::CouplingData(
   _previousIteration = Eigen::VectorXd::Zero(_data->values().size());
   PRECICE_ASSERT(_mesh != nullptr);
   PRECICE_ASSERT(_mesh.use_count() > 0);
+  std::cout<<"COUPLING DATA : "<<_data->getName()<<" MESH : "<<_mesh->getName()<<std::endl ;
 }
 
 int CouplingData::getDimensions() const
@@ -37,6 +38,31 @@ const Eigen::VectorXd &CouplingData::values() const
 {
   PRECICE_ASSERT(_data != nullptr);
   return _data->values();
+}
+
+bool CouplingData::hasMeshFilter()
+{
+  return _mesh->hasMeshFilter();
+}
+
+bool CouplingData::hasDataMappingMeshFilter(int dataID)
+{
+  return _mesh->hasDataMappingMeshFilter(dataID);
+}
+
+bool CouplingData::meshFilterActivated()
+{
+  return _mesh->verticesFilterIsActivated();
+}
+
+std::vector<int> const &CouplingData::filterIds() const
+{
+  return _mesh->activatedVerticesIds();
+}
+
+std::vector<int> const &CouplingData::getDataMappingMeshFilterIds(int dataID) const
+{
+  return _mesh->getDataMappingMeshFilterIds(dataID);
 }
 
 void CouplingData::storeIteration()

@@ -106,6 +106,8 @@ public:
       int inputDataID,
       int outputDataID) = 0;
 
+  virtual void computeMeshFilter(std::vector<int> const& input_filter, std::vector<int>& output_filter) = 0 ;
+
   /// Method used by partition. Tags vertices that could be owned by this rank.
   virtual void tagMeshFirstRound() = 0;
 

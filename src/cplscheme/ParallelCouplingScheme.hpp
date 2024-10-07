@@ -61,7 +61,7 @@ private:
    * @brief Exchanges all data between the participants of the ParallelCouplingScheme and applies acceleration.
    * @returns true, if iteration converged
    */
-  bool exchangeDataAndAccelerate() override;
+  bool exchangeDataAndAccelerate(bool set_convergence) override;
 
   /**
    * @brief ParallelCouplingScheme applies acceleration to _allData

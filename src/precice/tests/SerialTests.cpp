@@ -261,7 +261,7 @@ void runTestExplicit(std::string const &configurationFileName, TestContext const
   double dt = couplingInterface.initialize();
   while (couplingInterface.isCouplingOngoing()) {
     time += dt;
-    dt = couplingInterface.advance(dt);
+    dt = couplingInterface.advance(dt,true);
     timesteps++;
   }
   couplingInterface.finalize();
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithSubcycling)
     double dt        = maxDt / 2.0; // Timestep length desired by solver
     double currentDt = dt;          // Timestep length used by solver
     while (precice.isCouplingOngoing()) {
-      maxDt     = precice.advance(currentDt);
+      maxDt     = precice.advance(currentDt,true);
       currentDt = dt > maxDt ? maxDt : dt;
       timestep++;
     }
@@ -319,7 +319,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithSubcycling)
     double dt        = maxDt / 3.0; // Timestep length desired by solver
     double currentDt = dt;          // Timestep length used by solver
     while (precice.isCouplingOngoing()) {
-      maxDt     = precice.advance(currentDt);
+      maxDt     = precice.advance(currentDt,true);
       currentDt = dt > maxDt ? maxDt : dt;
       timestep++;
     }
@@ -427,7 +427,7 @@ BOOST_AUTO_TEST_CASE(testExplicitReadWriteScalarDataWithSubcycling)
       BOOST_TEST(writeData[i] != oldWriteData); // ensure that write data differs from one step to the next
       precice.writeScalarData(writeDataID, vertexIDs[i], writeData[i]);
     }
-    maxDt     = precice.advance(currentDt);
+    maxDt     = precice.advance(currentDt,true);
     currentDt = dt > maxDt ? maxDt : dt;
     timestep++;
     if (precice.isTimeWindowComplete()) {
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithDataExchange)
         Vector3d force(Vector3d::Constant(counter) + vertex.getCoords());
         cplInterface.writeVectorData(forcesID, vertex.getID(), force.data());
       }
-      maxDt = cplInterface.advance(maxDt);
+      maxDt = cplInterface.advance(maxDt,true);
       if (cplInterface.isCouplingOngoing()) {
         i = 0;
         for (auto &vertex : vertices) {
@@ -518,7 +518,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithDataExchange)
         Vector3d vel(Vector3d::Constant(counter - 1.0) + vertex.getCoords());
         cplInterface.writeVectorData(velocitiesID, vertex.getID(), vel.data());
       }
-      maxDt = cplInterface.advance(maxDt);
+      maxDt = cplInterface.advance(maxDt,true);
       if (cplInterface.isCouplingOngoing()) {
         for (auto &vertex : vertices) {
           Vector3d force = Vector3d::Zero();
@@ -559,7 +559,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithDataInitialization)
     while (cplInterface.isCouplingOngoing()) {
       Vector3d valueDataA(1.0, 1.0, 1.0);
       cplInterface.writeVectorData(dataAID, 0, valueDataA.data());
-      maxDt = cplInterface.advance(maxDt);
+      maxDt = cplInterface.advance(maxDt,true);
       cplInterface.readScalarData(dataBID, 0, valueDataB);
       BOOST_TEST(2.5 == valueDataB);
     }
@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithDataInitialization)
     BOOST_TEST(valueDataA == expected);
     while (cplInterface.isCouplingOngoing()) {
       cplInterface.writeScalarData(dataBID, 0, 2.5);
-      maxDt = cplInterface.advance(maxDt);
+      maxDt = cplInterface.advance(maxDt,true);
       cplInterface.readVectorData(dataAID, 0, valueDataA.data());
       BOOST_TEST(valueDataA == expected);
     }
@@ -652,7 +652,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithBlockDataExchange)
                                                  getWriteIDs.data());
       BOOST_TEST(writeIDs == getWriteIDs);
       //cplInterface.mapWrittenData(meshID);
-      maxDt = cplInterface.advance(maxDt);
+      maxDt = cplInterface.advance(maxDt,true);
       if (cplInterface.isCouplingOngoing()) {
         for (auto &vertex : vertices) {
           for (int dim = 0; dim < 3; dim++) {
@@ -710,7 +710,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithBlockDataExchange)
         double temperature = counter - 1.0 + vertex.getCoords()(0);
         cplInterface.writeScalarData(temperaturesID, vertex.getID(), temperature);
       }
-      maxDt = cplInterface.advance(maxDt);
+      maxDt = cplInterface.advance(maxDt,true);
       if (cplInterface.isCouplingOngoing()) {
         for (auto &vertex : vertices) {
           Vector3d force    = Vector3d::Zero();
@@ -755,7 +755,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithSolverGeometry)
     double dt = couplingInterface.initialize();
     while (couplingInterface.isCouplingOngoing()) {
       time += dt;
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
       timesteps++;
     }
     couplingInterface.finalize();
@@ -776,7 +776,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithSolverGeometry)
 
     while (couplingInterface.isCouplingOngoing()) {
       time += dt;
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
       timesteps++;
     }
     couplingInterface.finalize();
@@ -814,7 +814,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithDataScaling)
         Eigen::Vector2d data = Eigen::Vector2d::Constant(i);
         cplInterface.writeVectorData(velocitiesID, i, data.data());
       }
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
     }
     cplInterface.finalize();
   } else {
@@ -836,7 +836,7 @@ BOOST_AUTO_TEST_CASE(testExplicitWithDataScaling)
         BOOST_TEST(readData(0) == expectedData(0));
         BOOST_TEST(readData(1) == expectedData(1));
       }
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
     }
     cplInterface.finalize();
   }
@@ -888,7 +888,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshExplicit)
       // Write data
       couplingInterface.writeBlockScalarData(dataID, meshSize,
                                              ids.data(), writeData.data());
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
     }
 
   } else {
@@ -906,7 +906,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshExplicit)
     double dt = couplingInterface.initialize();
     while (couplingInterface.isCouplingOngoing()) {
 
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
       couplingInterface.readBlockScalarData(dataID, ids.size(),
                                             ids.data(), readData.data());
       // Expected data according to the writeData
@@ -961,7 +961,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshExplicitRead)
 
     while (couplingInterface.isCouplingOngoing()) {
 
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
       // Write data
       couplingInterface.readBlockScalarData(dataID, meshSize,
                                             ids.data(), readData.data());
@@ -987,7 +987,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshExplicitRead)
 
       couplingInterface.writeBlockScalarData(dataID, ids.size(),
                                              ids.data(), writeData.data());
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
     }
   }
 }
@@ -1044,7 +1044,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshAndMapping)
       // Write data
       interface.writeBlockScalarData(writeDataID, otherMeshSize,
                                      otherIDs.data(), writeData.data());
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(readDataID, ownIDs.size(),
                                     ownIDs.data(), readData.data());
       BOOST_TEST(readData == (std::vector<double>{2, 4, 3, 3}));
@@ -1074,7 +1074,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshAndMapping)
 
       interface.writeBlockScalarData(writeDataID, ids.size(),
                                      ids.data(), writeData.data());
-      dt = interface.advance(dt);
+      dt = interface.advance(dt,true);
       interface.readBlockScalarData(readDataID, ids.size(),
                                     ids.data(), readData.data());
       // Expected data according to the writeData
@@ -1142,7 +1142,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshImplicit)
       // Write data
       couplingInterface.writeBlockScalarData(otherDataID, meshSize,
                                              otherIDs.data(), writeData.data());
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
       couplingInterface.readBlockScalarData(ownDataID, ownIDs.size(),
                                             ownIDs.data(), readData.data());
       if (couplingInterface.isActionRequired(precice::constants::actionReadIterationCheckpoint())) {
@@ -1194,7 +1194,7 @@ BOOST_AUTO_TEST_CASE(AccessReceivedMeshImplicit)
       // Write data
       couplingInterface.writeBlockScalarData(otherDataID, meshSize,
                                              otherIDs.data(), writeData.data());
-      dt = couplingInterface.advance(dt);
+      dt = couplingInterface.advance(dt,true);
       couplingInterface.readBlockScalarData(ownDataID, ownIDs.size(),
                                             ownIDs.data(), readData.data());
       if (couplingInterface.isActionRequired(precice::constants::actionReadIterationCheckpoint())) {
@@ -1258,7 +1258,7 @@ BOOST_AUTO_TEST_CASE(testImplicit)
       iterationCount++;
       stateChange = initialStateChange / (double) iterationCount;
       state += stateChange;
-      maxDt = couplingInterface.advance(maxDt);
+      maxDt = couplingInterface.advance(maxDt,true);
       if (couplingInterface.isTimeWindowComplete()) {
         computedTimesteps++;
       }
@@ -1281,7 +1281,7 @@ BOOST_AUTO_TEST_CASE(testImplicit)
       }
       stateChange = initialStateChange / (double) iterationCount;
       state += stateChange;
-      maxDt = couplingInterface.advance(maxDt);
+      maxDt = couplingInterface.advance(maxDt,true);
       if (couplingInterface.isTimeWindowComplete()) {
         computedTimesteps++;
       }
@@ -1348,7 +1348,7 @@ BOOST_AUTO_TEST_CASE(testImplicitWithDataInitialization)
     BOOST_TEST(expectedReadValue == readData.at(0));
     BOOST_TEST(expectedReadValue == readData.at(1));
     couplingInterface.writeVectorData(writeDataID, vertexID, writeData.data());
-    dt = couplingInterface.advance(dt);
+    dt = couplingInterface.advance(dt,true);
     if (couplingInterface.isActionRequired(actionReadIterationCheckpoint())) {
       couplingInterface.markActionFulfilled(actionReadIterationCheckpoint());
     }
@@ -1418,7 +1418,7 @@ void runTestStationaryMappingWithSolverMesh(std::string const &config, int dim, 
       interface.writeVectorData(dataForcesID, i, force.data());
     }
     interface.mapWriteDataFrom(meshForcesID);
-    maxDt = interface.advance(maxDt);
+    maxDt = interface.advance(maxDt,true);
     interface.mapReadDataTo(meshDisplID);
 
     BOOST_TEST(interface.isWriteDataRequired(maxDt));
@@ -1430,7 +1430,7 @@ void runTestStationaryMappingWithSolverMesh(std::string const &config, int dim, 
       interface.writeVectorData(dataForcesID, i, force.data());
     }
     interface.mapWriteDataFrom(meshForcesID);
-    maxDt = interface.advance(maxDt);
+    maxDt = interface.advance(maxDt,true);
     interface.mapReadDataTo(meshDisplID);
 
     BOOST_TEST(interface.isWriteDataRequired(maxDt));
@@ -1468,7 +1468,7 @@ void runTestStationaryMappingWithSolverMesh(std::string const &config, int dim, 
     }
     Eigen::VectorXd expected = Eigen::VectorXd::Constant(dim, size);
     BOOST_TEST(equals(totalForce, expected));
-    maxDt = interface.advance(maxDt);
+    maxDt = interface.advance(maxDt,true);
 
     BOOST_TEST(interface.isWriteDataRequired(maxDt));
     BOOST_TEST(interface.isReadDataAvailable());
@@ -1481,7 +1481,7 @@ void runTestStationaryMappingWithSolverMesh(std::string const &config, int dim, 
     }
     expected.setConstant(2.0 * (double) size);
     BOOST_TEST(equals(totalForce, expected));
-    maxDt = interface.advance(maxDt);
+    maxDt = interface.advance(maxDt,true);
 
     BOOST_TEST(interface.isWriteDataRequired(maxDt));
     BOOST_TEST(not interface.isReadDataAvailable()); //second participant has no new data after last advance
@@ -1554,7 +1554,7 @@ BOOST_AUTO_TEST_CASE(testBug)
         double force[3] = {1.0, 2.0, 3.0};
         precice.writeVectorData(forcesID, i, force);
       }
-      maxDt = precice.advance(dt);
+      maxDt = precice.advance(dt,true);
       precice.mapReadDataTo(meshID);
       for (int i = 0; i < (int) coords.size(); i++) {
         double displacement[3];
@@ -1585,7 +1585,7 @@ BOOST_AUTO_TEST_CASE(testBug)
     }
     double dt = precice.initialize();
     while (precice.isCouplingOngoing()) {
-      precice.advance(dt);
+      precice.advance(dt,true);
     }
     precice.finalize();
   }
@@ -1623,7 +1623,7 @@ void runTestThreeSolvers(std::string const &config, std::vector<int> expectedCal
       if (precice.isActionRequired(writeIterCheckpoint)) {
         precice.markActionFulfilled(writeIterCheckpoint);
       }
-      dt = precice.advance(dt);
+      dt = precice.advance(dt,true);
       if (precice.isActionRequired(readIterCheckpoint)) {
         precice.markActionFulfilled(readIterCheckpoint);
       }
@@ -1647,7 +1647,7 @@ void runTestThreeSolvers(std::string const &config, std::vector<int> expectedCal
       if (precice.isActionRequired(writeIterCheckpoint)) {
         precice.markActionFulfilled(writeIterCheckpoint);
       }
-      dt = precice.advance(dt);
+      dt = precice.advance(dt,true);
       if (precice.isActionRequired(readIterCheckpoint)) {
         precice.markActionFulfilled(readIterCheckpoint);
       }
@@ -1672,7 +1672,7 @@ void runTestThreeSolvers(std::string const &config, std::vector<int> expectedCal
       if (precice.isActionRequired(writeIterCheckpoint)) {
         precice.markActionFulfilled(writeIterCheckpoint);
       }
-      dt = precice.advance(dt);
+      dt = precice.advance(dt,true);
       if (precice.isActionRequired(readIterCheckpoint)) {
         precice.markActionFulfilled(readIterCheckpoint);
       }
@@ -1792,7 +1792,7 @@ BOOST_AUTO_TEST_CASE(MultiCoupling)
     if (precice.isActionRequired(writeIterCheckpoint)) {
       precice.markActionFulfilled(writeIterCheckpoint);
     }
-    precice.advance(0.0001);
+    precice.advance(0.0001,true);
     if (precice.isActionRequired(readIterCheckpoint)) {
       precice.markActionFulfilled(readIterCheckpoint);
     }
@@ -1851,7 +1851,7 @@ BOOST_AUTO_TEST_CASE(MultiCoupling)
     if (precice.isActionRequired(writeIterCheckpoint)) {
       precice.markActionFulfilled(writeIterCheckpoint);
     }
-    precice.advance(0.0001);
+    precice.advance(0.0001,true);
     if (precice.isActionRequired(readIterCheckpoint)) {
       precice.markActionFulfilled(readIterCheckpoint);
     }
@@ -1925,7 +1925,7 @@ void testMappingNearestProjection(bool defineEdgesExplicitly, const std::string 
     cplInterface.writeScalarData(dataAID, idD, valOneD);
 
     // Advance, thus send the data to the receiving partner.
-    cplInterface.advance(maxDt);
+    cplInterface.advance(maxDt,true);
     BOOST_TEST(!cplInterface.isCouplingOngoing(), "Sending participant should have to advance once!");
     cplInterface.finalize();
   } else {
@@ -1955,7 +1955,7 @@ void testMappingNearestProjection(bool defineEdgesExplicitly, const std::string 
     BOOST_TEST(valueC == expectedValTwoC);
 
     // Verify that there is only one time step necessary.
-    cplInterface.advance(maxDt);
+    cplInterface.advance(maxDt,true);
     BOOST_TEST(!cplInterface.isCouplingOngoing(), "Receiving participant should have to advance once!");
     cplInterface.finalize();
   }
@@ -2025,7 +2025,7 @@ BOOST_AUTO_TEST_CASE(SendMeshToMultipleParticipants)
     BOOST_TEST(valueReceived == value);
   }
 
-  cplInterface.advance(maxDt);
+  cplInterface.advance(maxDt,true);
   cplInterface.finalize();
 }
 
@@ -2066,7 +2066,7 @@ BOOST_AUTO_TEST_CASE(PreconditionerBug)
       Vector2d value{0.0, 2.0 + numberOfAdvanceCalls * numberOfAdvanceCalls};
       cplInterface.writeVectorData(dataID, vertexID, value.data());
     }
-    cplInterface.advance(1.0);
+    cplInterface.advance(1.0,true);
     ++numberOfAdvanceCalls;
   }
   cplInterface.finalize();
@@ -2118,7 +2118,7 @@ void testSummationAction(const std::string &configFile, TestContext const &conte
       BOOST_TEST(valueC == expectedValueC);
       BOOST_TEST(valueD == expectedValueD);
 
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
     }
 
     cplInterface.finalize();
@@ -2155,7 +2155,7 @@ void testSummationAction(const std::string &configFile, TestContext const &conte
       cplInterface.writeScalarData(dataAID, idC, valueC);
       cplInterface.writeScalarData(dataAID, idD, valueD);
 
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
     }
     cplInterface.finalize();
   } else {
@@ -2191,7 +2191,7 @@ void testSummationAction(const std::string &configFile, TestContext const &conte
       cplInterface.writeScalarData(dataAID, idC, valueC);
       cplInterface.writeScalarData(dataAID, idD, valueD);
 
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
     }
 
     cplInterface.finalize();
@@ -2246,7 +2246,7 @@ void testWatchIntegral(const std::string &configFile, TestContext &context)
       cplInterface.writeScalarData(dataAID, idB, valueB);
       cplInterface.writeScalarData(dataAID, idC, valueC);
 
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
 
       valueA += increment;
       valueB += increment;
@@ -2283,7 +2283,7 @@ void testWatchIntegral(const std::string &configFile, TestContext &context)
       cplInterface.readScalarData(dataAID, idB, valueB);
       cplInterface.readScalarData(dataAID, idC, valueC);
 
-      dt = cplInterface.advance(dt);
+      dt = cplInterface.advance(dt,true);
     }
     cplInterface.finalize();
 
@@ -2495,7 +2495,7 @@ void testQuadMappingNearestProjection(bool defineEdgesExplicitly, const std::str
     cplInterface.writeScalarData(dataAID, idD, valOneD);
 
     // Advance, thus send the data to the receiving partner.
-    cplInterface.advance(maxDt);
+    cplInterface.advance(maxDt,true);
     BOOST_TEST(!cplInterface.isCouplingOngoing(), "Sending participant should have to advance once!");
     cplInterface.finalize();
   } else {
@@ -2525,7 +2525,7 @@ void testQuadMappingNearestProjection(bool defineEdgesExplicitly, const std::str
     BOOST_TEST(valueC == expectedValTwoC);
 
     // Verify that there is only one time step necessary.
-    cplInterface.advance(maxDt);
+    cplInterface.advance(maxDt,true);
     BOOST_TEST(!cplInterface.isCouplingOngoing(), "Receiving participant should have to advance once!");
     cplInterface.finalize();
   }
@@ -2639,7 +2639,7 @@ void testConvergenceMeasures(const std::string configFile, TestContext const &co
       cplInterface.writeScalarData(dataID, vertexID, writeValues.at(numberOfAdvanceCalls));
     }
 
-    cplInterface.advance(1.0);
+    cplInterface.advance(1.0,true);
     ++numberOfAdvanceCalls;
     ++numberOfIterations;
 
@@ -2756,7 +2756,7 @@ BOOST_AUTO_TEST_CASE(ActionTimingsExplicit)
   while (couplingInterface.isCouplingOngoing()) {
     couplingInterface.readVectorData(readDataID, vertexID, readData.data());
     couplingInterface.writeVectorData(writeDataID, vertexID, writeData.data());
-    dt = couplingInterface.advance(dt);
+    dt = couplingInterface.advance(dt,true);
     BOOST_TEST(couplingInterface.isTimeWindowComplete());
     iteration++;
     if (context.isNamed("SolverOne") || iteration < 10) {
@@ -2861,7 +2861,7 @@ BOOST_AUTO_TEST_CASE(ActionTimingsImplicit)
     if (couplingInterface.isActionRequired(writeIterCheckpoint)) {
       couplingInterface.markActionFulfilled(writeIterCheckpoint);
     }
-    dt = couplingInterface.advance(dt);
+    dt = couplingInterface.advance(dt,true);
     if (couplingInterface.isActionRequired(readIterCheckpoint)) {
       couplingInterface.markActionFulfilled(readIterCheckpoint);
     }
@@ -2915,7 +2915,7 @@ BOOST_AUTO_TEST_CASE(MultipleFromMappings)
     int          dataIDBottom   = interface.getDataID("Pressure", meshIDBottom);
 
     double dt = interface.initialize();
-    interface.advance(dt);
+    interface.advance(dt,true);
     double pressure = -1.0;
     interface.readScalarData(dataIDTop, vertexIDTop, pressure);
     BOOST_TEST(pressure == 1.0);
@@ -2934,7 +2934,7 @@ BOOST_AUTO_TEST_CASE(MultipleFromMappings)
     double dt       = interface.initialize();
     double pressure = 1.0;
     interface.writeScalarData(dataID, vertexID, pressure);
-    interface.advance(dt);
+    interface.advance(dt,true);
     BOOST_TEST(not interface.isCouplingOngoing());
     interface.finalize();
   }
@@ -2965,7 +2965,7 @@ BOOST_AUTO_TEST_CASE(MultipleToMappings)
     interface.writeScalarData(dataIDTop, vertexIDTop, displacementTop);
     double displacementBottom = 2.0;
     interface.writeScalarData(dataIDBottom, vertexIDBottom, displacementBottom);
-    interface.advance(dt);
+    interface.advance(dt,true);
     BOOST_TEST(not interface.isCouplingOngoing());
     interface.finalize();
 
@@ -2976,7 +2976,7 @@ BOOST_AUTO_TEST_CASE(MultipleToMappings)
     int          dataID   = interface.getDataID("DisplacementSum", meshID);
 
     double dt = interface.initialize();
-    interface.advance(dt);
+    interface.advance(dt,true);
     double displacement = -1.0;
     interface.readScalarData(dataID, vertexID, displacement);
     BOOST_TEST(displacement == 3.0);
@@ -3007,9 +3007,9 @@ BOOST_AUTO_TEST_CASE(AitkenAcceleration)
     interface.writeScalarData(dataID, vertexID, value);
 
     interface.markActionFulfilled(actionWriteIterationCheckpoint());
-    interface.advance(dt);
+    interface.advance(dt,true);
     interface.markActionFulfilled(actionReadIterationCheckpoint());
-    interface.advance(dt);
+    interface.advance(dt,true);
     BOOST_TEST(not interface.isCouplingOngoing());
     interface.finalize();
 
@@ -3021,14 +3021,14 @@ BOOST_AUTO_TEST_CASE(AitkenAcceleration)
 
     double dt = interface.initialize();
     interface.markActionFulfilled(actionWriteIterationCheckpoint());
-    interface.advance(dt);
+    interface.advance(dt,true);
 
     double value = -1.0;
     interface.readScalarData(dataID, vertexID, value);
     BOOST_TEST(value == 0.1); // due to initial underrelaxation
 
     interface.markActionFulfilled(actionReadIterationCheckpoint());
-    interface.advance(dt);
+    interface.advance(dt,true);
     BOOST_TEST(not interface.isCouplingOngoing());
     interface.finalize();
   }
@@ -3093,7 +3093,7 @@ void testQuadMappingScaledConsistent(const std::string configFile, const TestCon
     cplInterface.writeScalarData(dataAID, idD, valOneD);
 
     // Advance, thus send the data to the receiving partner.
-    cplInterface.advance(maxDt);
+    cplInterface.advance(maxDt,true);
     BOOST_TEST(!cplInterface.isCouplingOngoing(), "Sending participant should have to advance once!");
     cplInterface.finalize();
   } else {
@@ -3128,7 +3128,7 @@ void testQuadMappingScaledConsistent(const std::string configFile, const TestCon
     BOOST_TEST(expectedIntegral == calculatedIntegral);
 
     // Verify that there is only one time step necessary.
-    cplInterface.advance(maxDt);
+    cplInterface.advance(maxDt,true);
     BOOST_TEST(!cplInterface.isCouplingOngoing(), "Receiving participant should have to advance once!");
     cplInterface.finalize();
   }
@@ -3176,7 +3176,7 @@ void multiCouplingThreeSolvers(const std::string configFile, const TestContext &
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -3209,7 +3209,7 @@ void multiCouplingThreeSolvers(const std::string configFile, const TestContext &
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -3241,7 +3241,7 @@ void multiCouplingThreeSolvers(const std::string configFile, const TestContext &
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -3300,7 +3300,7 @@ void multiCouplingFourSolvers(const std::string configFile, const TestContext &c
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -3331,7 +3331,7 @@ void multiCouplingFourSolvers(const std::string configFile, const TestContext &c
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -3364,7 +3364,7 @@ void multiCouplingFourSolvers(const std::string configFile, const TestContext &c
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);
@@ -3391,7 +3391,7 @@ void multiCouplingFourSolvers(const std::string configFile, const TestContext &c
         cplInterface.markActionFulfilled(writeIterCheckpoint);
       }
 
-      cplInterface.advance(maxDt);
+      cplInterface.advance(maxDt,true);
 
       if (cplInterface.isActionRequired(readIterCheckpoint)) {
         cplInterface.markActionFulfilled(readIterCheckpoint);

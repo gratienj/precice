@@ -105,7 +105,7 @@ struct CompositionalCouplingSchemeFixture : m2n::WhiteboxAccessor {
           cplScheme->markActionFulfilled(writeIterationCheckpoint);
         }
         cplScheme->addComputedTime(cplScheme->getNextTimestepMaxLength());
-        cplScheme->advance();
+        cplScheme->advance(true);
         if (cplScheme->isActionRequired(readIterationCheckpoint)) {
           cplScheme->markActionFulfilled(readIterationCheckpoint);
         } else {
@@ -133,7 +133,7 @@ struct CompositionalCouplingSchemeFixture : m2n::WhiteboxAccessor {
           cplScheme->markActionFulfilled(writeIterationCheckpoint);
         }
         cplScheme->addComputedTime(cplScheme->getNextTimestepMaxLength());
-        cplScheme->advance();
+        cplScheme->advance(true);
         if (cplScheme->isActionRequired(readIterationCheckpoint)) {
           cplScheme->markActionFulfilled(readIterationCheckpoint);
         } else {
@@ -162,7 +162,7 @@ struct CompositionalCouplingSchemeFixture : m2n::WhiteboxAccessor {
           cplScheme->markActionFulfilled(writeIterationCheckpoint);
         }
         cplScheme->addComputedTime(cplScheme->getNextTimestepMaxLength());
-        cplScheme->advance();
+        cplScheme->advance(true);
         if (cplScheme->isActionRequired(readIterationCheckpoint)) {
           cplScheme->markActionFulfilled(readIterationCheckpoint);
         } else {
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit1)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
   }
   composition.finalize();
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit1)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
   }
   composition.finalize();
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit2)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
   }
   composition.finalize();
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit3)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
   }
   composition.finalize();
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit2)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 2 == 1) {
       BOOST_TEST(scheme1->isActionRequired(readIterationCheckpoint));
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit2DiffIteration)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 3 == 2) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit3)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 2 == 0) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -438,7 +438,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit3DiffIteration)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 4 == 0) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit1Implicit2)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 2 == 0) {
       BOOST_TEST(scheme2->isActionRequired(writeIterationCheckpoint));
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit2Explicit1)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 2 == 0) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit1Implicit3)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 3 == 0) {
       BOOST_TEST(scheme2->isActionRequired(writeIterationCheckpoint));
@@ -587,7 +587,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit3Explicit1)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 3 == 0) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -623,7 +623,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit1Implicit2Implicit2)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 2 == 0) {
       BOOST_TEST(scheme2->isActionRequired(writeIterationCheckpoint));
@@ -663,7 +663,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionExplicit1Implicit2Implicit3)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 3 == 0) {
       BOOST_TEST(scheme1->getTimeWindows() - 1 == advances / 3);
@@ -706,7 +706,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit2Implicit2Explicit1)
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 2 == 0) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -750,7 +750,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionImplicit2Implicit2Explicit1DiffIt
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 3 == 0) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));
@@ -799,7 +799,7 @@ BOOST_AUTO_TEST_CASE(testDummySchemeCompositionUntitled) /// @todo give a better
   composition.initialize(0.0, 1);
   int advances = 0;
   while (composition.isCouplingOngoing()) {
-    composition.advance();
+    composition.advance(true);
     advances++;
     if (advances % 4 >= 3) {
       BOOST_TEST(scheme1->isActionRequired(writeIterationCheckpoint));

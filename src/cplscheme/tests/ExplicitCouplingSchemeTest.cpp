@@ -61,7 +61,7 @@ void runSimpleExplicitCoupling(
       computedTime += cplScheme.getNextTimestepMaxLength();
       computedTimesteps++;
       cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-      cplScheme.advance();
+      cplScheme.advance(true);
       BOOST_TEST(cplScheme.isTimeWindowComplete());
       BOOST_TEST(testing::equals(computedTime, cplScheme.getTime()));
       BOOST_TEST(computedTimesteps == cplScheme.getTimeWindows() - 1);
@@ -104,7 +104,7 @@ void runSimpleExplicitCoupling(
       computedTime += cplScheme.getNextTimestepMaxLength();
       computedTimesteps++;
       cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-      cplScheme.advance();
+      cplScheme.advance(true);
       BOOST_TEST(testing::equals(computedTime, cplScheme.getTime()));
       BOOST_TEST(computedTimesteps == cplScheme.getTimeWindows() - 1);
       BOOST_TEST(not cplScheme.isActionRequired("constants::actionWriteIterationCheckpoint()"));
@@ -166,7 +166,7 @@ void runExplicitCouplingWithSubcycling(
       computedTime += dtUsed;
       computedTimesteps++;
       cplScheme.addComputedTime(dtUsed);
-      cplScheme.advance();
+      cplScheme.advance(true);
       // If the dt from preCICE is larger than the desired one, do subcycling,
       // else, use the dt from preCICE
       dtUsed = cplScheme.getNextTimestepMaxLength() > dtDesired
@@ -218,7 +218,7 @@ void runExplicitCouplingWithSubcycling(
       computedTime += cplScheme.getNextTimestepMaxLength();
       computedTimesteps++;
       cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-      cplScheme.advance();
+      cplScheme.advance(true);
       BOOST_TEST(testing::equals(computedTime, cplScheme.getTime()));
       BOOST_TEST(computedTimesteps == cplScheme.getTimeWindows() - 1);
       BOOST_TEST(not cplScheme.isActionRequired("constants::actionWriteIterationCheckpoint()"));
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(testExplicitCouplingFirstParticipantSetsDt)
       computedTime += dt;
       computedTimesteps++;
       cplScheme.addComputedTime(dt);
-      cplScheme.advance();
+      cplScheme.advance(true);
       BOOST_TEST(cplScheme.isTimeWindowComplete());
       BOOST_TEST(testing::equals(computedTime, cplScheme.getTime()));
       BOOST_TEST(computedTimesteps == cplScheme.getTimeWindows() - 1);
@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE(testExplicitCouplingFirstParticipantSetsDt)
       computedTime += cplScheme.getTimeWindowSize();
       computedTimesteps++;
       cplScheme.addComputedTime(cplScheme.getTimeWindowSize());
-      cplScheme.advance();
+      cplScheme.advance(true);
       BOOST_TEST(cplScheme.isTimeWindowComplete());
       BOOST_TEST(testing::equals(computedTime, cplScheme.getTime()));
       BOOST_TEST(computedTimesteps == cplScheme.getTimeWindows() - 1);
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE(testSerialDataInitialization)
     BOOST_TEST(testing::equals(dataValues1(0), 1.0));
     dataValues2(0) = 2.0;
     cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-    cplScheme.advance();
+    cplScheme.advance(true);
     BOOST_TEST(not cplScheme.isCouplingOngoing());
     cplScheme.finalize();
   } else {
@@ -496,7 +496,7 @@ BOOST_AUTO_TEST_CASE(testSerialDataInitialization)
     cplScheme.initializeData();
     BOOST_TEST(testing::equals(dataValues2(0), 2.0));
     cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-    cplScheme.advance();
+    cplScheme.advance(true);
     BOOST_TEST(not cplScheme.isCouplingOngoing());
     cplScheme.finalize();
   }
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(testParallelDataInitialization)
     BOOST_TEST(testing::equals(dataValues1(0), 1.0));
     dataValues2(0) = 2.0;
     cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-    cplScheme.advance();
+    cplScheme.advance(true);
     BOOST_TEST(testing::equals(dataValues0(0), 4.0));
     BOOST_TEST(not cplScheme.isCouplingOngoing());
     cplScheme.finalize();
@@ -569,7 +569,7 @@ BOOST_AUTO_TEST_CASE(testParallelDataInitialization)
     BOOST_TEST(testing::equals(dataValues2(0), 3.0));
     dataValues0(0) = 4.0;
     cplScheme.addComputedTime(cplScheme.getNextTimestepMaxLength());
-    cplScheme.advance();
+    cplScheme.advance(true);
     BOOST_TEST(testing::equals(dataValues2(0), 2.0));
     BOOST_TEST(not cplScheme.isCouplingOngoing());
     cplScheme.finalize();
