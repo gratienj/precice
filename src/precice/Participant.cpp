@@ -5,6 +5,7 @@
 #include "precice/Participant.hpp"
 #include "precice/impl/ParticipantImpl.hpp"
 #include "precice/impl/versions.hpp"
+#include "cplscheme/impl/ConvergenceMeasure.hpp"
 
 namespace precice {
 
@@ -271,4 +272,13 @@ void Participant::stopLastProfilingSection()
   _impl->stopLastProfilingSection();
 }
 
+void Participant::addUserAppConvergenceMeasure(
+       std::string_view                                    meshName,
+       std::string_view                                    dataName,
+       bool                                                suffices,
+       bool                                                strict,
+       ::precice::IUserAppConvergenceOp*  user_op)
+{
+  _impl->addUserAppConvergenceMeasure(meshName,dataName,suffices,strict,user_op) ;
+}
 } // namespace precice

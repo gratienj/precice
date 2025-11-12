@@ -273,6 +273,13 @@ public:
 
   ///@}
 
+  void addUserAppConvergenceMeasure(
+           std::string_view                  meshName,
+           std::string_view                  dataName,
+           bool                              suffices,
+           bool                              strict,
+           ::precice::IUserAppConvergenceOp* user_op) ;
+
   /** @name User profiling
    */
   ///@{

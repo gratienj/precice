@@ -124,6 +124,7 @@ target_sources(preciceCore
     src/cplscheme/impl/SharedPointer.hpp
     src/cplscheme/impl/TimeHandler.cpp
     src/cplscheme/impl/TimeHandler.hpp
+    src/cplscheme/impl/UserAppConvergenceMeasure.cpp
     src/io/Export.cpp
     src/io/Export.hpp
     src/io/ExportCSV.cpp
@@ -254,6 +255,7 @@ target_sources(preciceCore
     src/precice/Tooling.cpp
     src/precice/Tooling.hpp
     src/precice/Types.hpp
+    src/precice/UserAppTools.hpp
     src/precice/config/Configuration.cpp
     src/precice/config/Configuration.hpp
     src/precice/config/ParticipantConfiguration.cpp
@@ -364,4 +366,5 @@ set_property(TARGET precice PROPERTY PUBLIC_HEADER
     src/precice/Types.hpp
     src/precice/precice.hpp
     src/precice/span.hpp
+    src/precice/UserAppTools.hpp
     )

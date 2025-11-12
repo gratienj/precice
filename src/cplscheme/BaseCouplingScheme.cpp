@@ -18,6 +18,7 @@
 #include "cplscheme/CouplingScheme.hpp"
 #include "cplscheme/impl/SharedPointer.hpp"
 #include "impl/ConvergenceMeasure.hpp"
+#include "impl/UserAppConvergenceMeasure.hpp"
 #include "io/TXTTableWriter.hpp"
 #include "logging/LogMacros.hpp"
 #include "math/differences.hpp"
@@ -678,6 +679,23 @@ void BaseCouplingScheme::addConvergenceMeasure(
     bool                        strict,
     impl::PtrConvergenceMeasure measure)
 {
+  ConvergenceMeasureContext convMeasure;
+  PRECICE_ASSERT(_allData.count(dataID) == 1, "Data with given data ID must exist!");
+  convMeasure.couplingData = _allData.at(dataID);
+  convMeasure.suffices     = suffices;
+  convMeasure.strict       = strict;
+  convMeasure.measure      = std::move(measure);
+  _convergenceMeasures.push_back(convMeasure);
+}
+
+
+void BaseCouplingScheme::addUserAppConvergenceMeasure(
+    int                         dataID,
+    bool                        suffices,
+    bool                        strict,
+    precice::IUserAppConvergenceOp*      user_op)
+{
+  auto measure = std::make_shared<impl::UserAppConvergenceMeasure>(user_op);
   ConvergenceMeasureContext convMeasure;
   PRECICE_ASSERT(_allData.count(dataID) == 1, "Data with given data ID must exist!");
   convMeasure.couplingData = _allData.at(dataID);

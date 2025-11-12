@@ -508,4 +508,12 @@ ImplicitData CompositionalCouplingScheme::implicitDataToReceive() const
   return {};
 }
 
+void CompositionalCouplingScheme::addUserAppConvergenceMeasure(
+    int                          dataID,
+    bool                         suffices,
+    bool                         strict,
+    precice::IUserAppConvergenceOp* user_op)
+{
+    PRECICE_UNREACHABLE("Not implemented and not allowed");
+}
 } // namespace precice::cplscheme

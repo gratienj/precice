@@ -16,6 +16,8 @@ class ParticipantImpl;
 namespace testing {
 struct WhiteboxAccessor;
 }
+
+class IUserAppConvergenceOp ;
 } // namespace precice
 
 // ----------------------------------------------------------- CLASS DEFINITION
@@ -1168,6 +1170,12 @@ public:
 
   ///@}
 
+  void addUserAppConvergenceMeasure(
+         std::string_view            meshName,
+         std::string_view            dataName,
+         bool                        suffices,
+         bool                        strict,
+         ::precice::IUserAppConvergenceOp* user_op);
   /** @name User-defined profiling
    *
    * These functions offer access to the preCICE internal profiling functionality.

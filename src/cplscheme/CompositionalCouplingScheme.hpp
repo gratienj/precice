@@ -210,6 +210,15 @@ public:
   /// @copydoc cplscheme::CouplingScheme::implicitDataToReceive()
   ImplicitData implicitDataToReceive() const final override;
 
+
+  /// Adds a measure to determine the convergence of coupling iterations.
+  void addUserAppConvergenceMeasure(
+      int                         dataID,
+      bool                        suffices,
+      bool                        strict,
+      precice::IUserAppConvergenceOp*      user_op) override;
+
+
 private:
   mutable logging::Logger _log{"cplscheme::CompositionalCouplingScheme"};
 

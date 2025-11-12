@@ -7,7 +7,9 @@
 #include "com/SharedPointer.hpp"
 #include "cplscheme/ImplicitData.hpp"
 #include "precice/impl/Types.hpp"
-
+namespace precice {
+class IUserAppConvergenceOp ;
+}
 namespace precice::cplscheme {
 
 /**
@@ -38,6 +40,7 @@ namespace precice::cplscheme {
  * -# when the method isCouplingOngoing() returns false, call finalize() to
  *    stop the coupling scheme
  */
+
 class CouplingScheme {
 public:
   /// Does not define a time limit for the coupled simulation.
@@ -235,6 +238,12 @@ public:
 
   /// Returns a vector of implicit data to receive in the next advance
   virtual ImplicitData implicitDataToReceive() const = 0;
+
+  virtual void addUserAppConvergenceMeasure(
+        int                          dataID,
+        bool                         suffices,
+        bool                         strict,
+        precice::IUserAppConvergenceOp*       user_op) = 0;
 };
 
 } // namespace precice::cplscheme

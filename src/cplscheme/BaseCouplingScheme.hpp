@@ -197,6 +197,13 @@ public:
       bool                        strict,
       impl::PtrConvergenceMeasure measure);
 
+  /// Adds a measure to determine the convergence of coupling iterations.
+  void addUserAppConvergenceMeasure(
+      int                         dataID,
+      bool                        suffices,
+      bool                        strict,
+      precice::IUserAppConvergenceOp* user_op);
+
   /// Set an acceleration technique.
   void setAcceleration(const acceleration::PtrAcceleration &acceleration);
 

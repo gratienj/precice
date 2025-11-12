@@ -33,6 +33,7 @@ target_sources(testprecice
     src/cplscheme/tests/ResidualRelativeConvergenceMeasureTest.cpp
     src/cplscheme/tests/SerialImplicitCouplingSchemeTest.cpp
     src/cplscheme/tests/TimeHandlerTests.cpp
+    src/cplscheme/tests/UserAppConvergenceMeasureTest.cpp
     src/io/tests/ExportCSVTest.cpp
     src/io/tests/ExportConfigurationTest.cpp
     src/io/tests/ExportVTKTest.cpp

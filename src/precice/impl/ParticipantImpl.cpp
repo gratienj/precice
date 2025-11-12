@@ -1948,6 +1948,21 @@ bool ParticipantImpl::reinitHandshake(bool requestReinit) const
   }
 }
 
+void ParticipantImpl::addUserAppConvergenceMeasure(
+       std::string_view                  meshName,
+       std::string_view                  dataName,
+       bool                              suffices,
+       bool                              strict,
+       ::precice::IUserAppConvergenceOp* user_op)
+{
+
+  PRECICE_TRACE(meshName, dataName);
+  PRECICE_VALIDATE_MESH_NAME(meshName);
+  PRECICE_VALIDATE_DATA_NAME(meshName, dataName);
+  auto dataID = _accessor->usedMeshContext(meshName).mesh->data(dataName)->getID() ;
+  _couplingScheme->addUserAppConvergenceMeasure(dataID,suffices,strict,user_op) ;
+}
+
 void ParticipantImpl::startProfilingSection(std::string_view sectionName)
 {
   PRECICE_CHECK(std::find(sectionName.begin(), sectionName.end(), '/') == sectionName.end(),

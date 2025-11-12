@@ -53,4 +53,5 @@ public:
     return "";
   }
 };
+
 } // namespace precice::cplscheme::impl

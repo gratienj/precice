@@ -218,6 +218,14 @@ public:
     return {};
   }
 
+  void addUserAppConvergenceMeasure(
+        int                          dataID,
+        bool                         suffices,
+        bool                         strict,
+        precice::IUserAppConvergenceOp* user_op)
+  {
+
+  }
 private:
   mutable logging::Logger _log{"cplscheme::tests::DummyCouplingScheme"};
 
